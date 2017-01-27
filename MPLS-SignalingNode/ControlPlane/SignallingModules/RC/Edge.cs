@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MPLS_SignalingNode.ControlPlane.SignallingModules.RC
+namespace ControlPlane
 {
     class Edge
     {
@@ -48,7 +48,6 @@ namespace MPLS_SignalingNode.ControlPlane.SignallingModules.RC
             this.end = end;
             this.weight = weight;
             this.capacity = capacity;
-            //dupa
         }
     }
 }

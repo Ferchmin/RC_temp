@@ -10,8 +10,9 @@ namespace ControlPlane
         #region Variables
         private string _configurationFilePath;
         private string _localPcIpAddress;
-        
 
+        private Graph graph = new Graph();
+        
         private PC _pc;
         #endregion
 
@@ -113,7 +114,7 @@ namespace ControlPlane
 
         public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
         {
-
+       
         }
 
         #endregion

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MPLS_SignalingNode.ControlPlane.SignallingModules.RC
+namespace ControlPlane
 {
     class Vertex
     {

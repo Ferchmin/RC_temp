@@ -4,18 +4,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MPLS_SignalingNode.ControlPlane.SignallingModules.RC
+namespace ControlPlane
 {
     class Graph
     {
-        private Vertex[] vertices;
-        public Vertex[] Vertices
+        private List<Vertex> vertices;
+        public List<Vertex> Vertices
         {
             get { return vertices; }
         }
 
-        private Edge[] edges;
-        public Edge[] Edges
+        private List<Edge> edges;
+        public List<Edge> Edges
         {
             get { return edges; }
         }

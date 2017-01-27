@@ -51,6 +51,7 @@
     <Compile Include="ControlPlane\SignallingModules\LRM\LRM_XmlSchema.cs" />
     <Compile Include="ControlPlane\SignallingModules\PC\PC_LoadingXmlFile.cs" />
     <Compile Include="ControlPlane\SignallingModules\PC\PC_XmlSchema.cs" />
+    <Compile Include="ControlPlane\SignallingModules\RC\Dijkstra.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Edge.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Graph.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\RC_LoadingXmlFile.cs" />
