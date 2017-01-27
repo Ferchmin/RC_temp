@@ -48,6 +48,7 @@ namespace MPLS_SignalingNode.ControlPlane.SignallingModules.RC
             this.end = end;
             this.weight = weight;
             this.capacity = capacity;
+            //dupa
         }
     }
 }
