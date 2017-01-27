@@ -54,6 +54,7 @@
     <Compile Include="ControlPlane\SignallingModules\RC\Dijkstra.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Edge.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Graph.cs" />
+    <Compile Include="ControlPlane\SignallingModules\RC\Path.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\RC_LoadingXmlFile.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\RC_XmlSchema.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Vertex.cs" />
