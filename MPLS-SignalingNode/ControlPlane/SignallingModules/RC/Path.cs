@@ -44,7 +44,7 @@ namespace ControlPlane
         {
             vertices[length++] = vertex;
         }
-        public Path(int n)
+        public Path()
         {
             vertices = new List<Vertex>();
             length = 0;
@@ -53,4 +53,3 @@ namespace ControlPlane
         }
     }
 }
-
