@@ -60,11 +60,12 @@ namespace ControlPlane
             this.edgesOut = new Edge[0];
         }
 
-        public Vertex(int id, int capacity)
+        public Vertex(int id, int capacity, string areaName)
         {
             this.id = id;
             this.edgesOut = new Edge[0];
             this.capacity = capacity;
+            this.areaName = areaName;
         }
     
     }

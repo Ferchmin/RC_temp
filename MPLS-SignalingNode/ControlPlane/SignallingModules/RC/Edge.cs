@@ -52,9 +52,17 @@ namespace ControlPlane
         public static string CreateName(Vertex begin, Vertex end)
         {
             StringBuilder name = new StringBuilder();
-            name.Append(Math.Min(begin.Id, end.Id));
+            name.Append(begin.Id.ToString());
             name.Append("_");
-            name.Append(Math.Max(begin.Id, end.Id));
+            name.Append(end.Id.ToString());
+            return name.ToString();
+        }
+        public static string CreateName(int begin, int end)
+        {
+            StringBuilder name = new StringBuilder();
+            name.Append(begin.ToString());
+            name.Append("_");
+            name.Append(end.ToString());
             return name.ToString();
         }
     }

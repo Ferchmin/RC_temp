@@ -10,7 +10,7 @@ namespace ControlPlane
         #region Variables
         private string _configurationFilePath;
         private string _localPcIpAddress;
-
+        private string _myAreaName;
         private Graph graph = new Graph();
         
         private PC _pc;
@@ -120,18 +120,17 @@ namespace ControlPlane
             //przypadek kiedy wierzcholek jeszcze nie istnieje
             if (item == null)
             {
-                Vertex v = new Vertex(snppId, availibleCapacity);
+                Vertex v = new Vertex(snppId, availibleCapacity, areaName);
                 foreach (var point in reachableSnppIdList)
                 {
                     var res = graph.Vertices.Find(x => x.Id == point);
                     if(res == null)
                     {
-                        Vertex uncompleteVertex = new Vertex(point, 0);
+                        Vertex uncompleteVertex = new Vertex(point, 0, "unreachable");
                         graph.Vertices.Add(uncompleteVertex);
                         double weight = double.MaxValue;
                         Edge uncompleteEdge = new Edge(v, uncompleteVertex, 0,  weight);
                         v.addEdgeOut(uncompleteEdge);
-                        uncompleteVertex.addEdgeOut(uncompleteEdge);
                         graph.Edges.Add(uncompleteEdge);
                     }
                     else
@@ -158,24 +157,86 @@ namespace ControlPlane
             else
             {
                 graph.Vertices.Find(x => x.Id == snppId).Capacity = availibleCapacity;
+                graph.Vertices.Find(x => x.Id == snppId).AreaName = areaName;
                 foreach (var point in reachableSnppIdList)
                 {
                     var res = graph.Vertices.Find(x => x.Id == point);
                     if (res == null)
                     {
-                        Vertex uncompleteVertex = new Vertex(point, 0);
+                        Vertex uncompleteVertex = new Vertex(point, 0, "unreachable");
                         graph.Vertices.Add(uncompleteVertex);
                         double weight = double.MaxValue;
                         Edge uncompleteEdge = new Edge(graph.Vertices.Find(x => x.Id == snppId), uncompleteVertex, 0, weight);
                         graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(uncompleteEdge);
-                        uncompleteVertex.addEdgeOut(uncompleteEdge);
                         graph.Edges.Add(uncompleteEdge);
                     }
                     else
                     {
+                        Edge existingEdge = graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id)));
+                        if ((existingEdge != null) && !(res.AreaName.Equals("unreachable")))
+                        {
+                            if (existingEdge.Weight == double.MaxValue)
+                            {
+                            }
+                            else
+                            {
+                            }
+                        }
+                        else
+                        {
+                            double weight;
+                            int capacity;
+                            if (res.AreaName.Equals(areaName))
+                            {
+                                weight = 0;
+                                capacity = int.MaxValue;
+                            }
+                            else
+                            {
+                                weight = 1;
+                                capacity = Math.Min(item.Capacity, res.Capacity);
+                            }
+                            Edge edge = new Edge(item, res, capacity, weight);
+                            graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
+                        }
+                    }
+                }
+            }
+            //tworzenie krawedzi pomiedzy wierzcholkami z tego samego SN
+            if (!areaName.Equals(_myAreaName))
+            {
+                List<Vertex> area = new List<Vertex>();
+                area = graph.Vertices.FindAll(x => x.AreaName.Equals(areaName));
+                if (area != null)
+                {
+                    foreach (var v in area)
+                    {
+                        string edgeID = Edge.CreateName(graph.Vertices.Find(x => x.Id == snppId), v);
+                        var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
+                        if ((res == null) && !(v.Id.Equals(snppId.ToString())))
+                        {
+                            int capacity = int.MaxValue;
+                            double weight = 0;
+                            Edge edge = new Edge(graph.Vertices.Find(x => x.Id == snppId), graph.Vertices.Find(x => x.Id == v.Id), capacity, weight);
+                            graph.Vertices.Find(x => x.Id == v.Id).addEdgeOut(edge);
+                            graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
+                            graph.Edges.Add(edge);
+                        }
+                    }
+                }
+            }
+            //sprawdzam czy w kierunku SNPP, ktorego rozgloszenie wlasnie otrzymalismy, nie sa skierowane jakies sciezki widma
+            foreach (var v in graph.Vertices)
+            {
+                string edgeID = Edge.CreateName(v.Id, snppId);
+                var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
+                if(res != null)
+                {
+                    if(res.Weight == double.MaxValue)
+                    {
                         double weight;
                         int capacity;
-                        if (res.AreaName.Equals(areaName))
+                        if (v.AreaName.Equals(areaName))
                         {
                             weight = 0;
                             capacity = int.MaxValue;
@@ -183,31 +244,10 @@ namespace ControlPlane
                         else
                         {
                             weight = 1;
-                            capacity = Math.Min(graph.Vertices.Find(x => x.Id == snppId).Capacity, res.Capacity);
+                            capacity = Math.Min(item.Capacity, res.Capacity);
                         }
-                        string edgeID = Edge.CreateName(graph.Vertices.Find(x => x.Id == snppId), res);
                         graph.Edges.Find(x => x.Id.Equals(edgeID)).Capacity = capacity;
                         graph.Edges.Find(x => x.Id.Equals(edgeID)).Weight = weight;
-                    }
-                }
-            }
-            //tworzenie krawedzi pomiedzy wierzcholkami z tego samego SN
-            List<Vertex> area = new List<Vertex>();
-            area = graph.Vertices.FindAll(x => x.AreaName.Equals(areaName));
-            if(area != null)
-            {
-                foreach (var v in area)
-                {
-                    string edgeID = Edge.CreateName(graph.Vertices.Find(x => x.Id == snppId), v);
-                    var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                    if((res == null) && !(v.Id.Equals(snppId.ToString())))
-                    {
-                        int capacity = int.MaxValue;
-                        double weight = 0;
-                        Edge edge = new Edge(graph.Vertices.Find(x => x.Id == snppId), graph.Vertices.Find(x => x.Id == v.Id), capacity, weight);
-                        graph.Vertices.Find(x => x.Id == v.Id).addEdgeOut(edge);
-                        graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
-                        graph.Edges.Add(edge);
                     }
                 }
             }
