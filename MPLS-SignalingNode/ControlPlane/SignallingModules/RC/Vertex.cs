@@ -14,7 +14,12 @@ namespace ControlPlane
             get { return id; }
             set { id = value; }
         }
-
+        private string areaName;
+        public string AreaName
+        {
+            get { return areaName; }
+            set { areaName = value; }
+        }
         private Vertex prev;
         public Vertex Prev
         {

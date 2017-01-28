@@ -8,8 +8,8 @@ namespace ControlPlane
 {
     class Edge
     {
-        private int id;
-        public int Id
+        private string id;
+        public string Id
         {
             get { return id; }
             set { id = value; }
@@ -41,13 +41,21 @@ namespace ControlPlane
             get { return capacity;}
             set { capacity = value; }
         }
-        public Edge(int id, Vertex begin, Vertex end, int capacity, double weight)
+        public Edge(Vertex begin, Vertex end, int capacity, double weight)
         {
-            this.id = id;
+            this.id = CreateName(begin, end);
             this.begin = begin;
             this.end = end;
             this.weight = weight;
             this.capacity = capacity;
+        }
+        public static string CreateName(Vertex begin, Vertex end)
+        {
+            StringBuilder name = new StringBuilder();
+            name.Append(Math.Min(begin.Id, end.Id));
+            name.Append("_");
+            name.Append(Math.Max(begin.Id, end.Id));
+            return name.ToString();
         }
     }
 }
