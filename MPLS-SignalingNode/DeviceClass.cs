@@ -91,7 +91,7 @@ namespace MPLS_SignalingNode
         {
             string log;
 
-            using (StreamWriter file = new StreamWriter(fileLogPath, true))
+            using (StreamWriter file = new StreamWriter("kupa", true))
             {
                 log = "#" + logID + " | " + DateTime.Now.ToString("hh:mm:ss") + " " + logDescription;
                 file.WriteLine(log);

@@ -55,6 +55,12 @@ namespace ControlPlane
             _moduleRC = rcPointer;
             _moduleLRM = lrmPointer;
         }
+        public PC(string configurationFilePath, RC rcPointer)
+        {
+            InitialiseVariables(configurationFilePath);
+            InitializeSocket();
+            _moduleRC = rcPointer;
+        }
         private void InitialiseVariables(string configurationFilePath)
         {
             _configurationFilePath = configurationFilePath;
@@ -103,6 +109,7 @@ namespace ControlPlane
         }
         private void ReceivedPacketCallback(IAsyncResult res)
         {
+            Console.WriteLine("cos przyszlo");
             int size;
             try
             {

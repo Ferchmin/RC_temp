@@ -20,7 +20,7 @@ namespace ControlPlane
         #region Main_Methodes
         public RC(string configurationFilePath)
         {
-            //InitialiseVariables(configurationFilePath);
+            InitialiseVariables(configurationFilePath);
         }
         private void InitialiseVariables(string configurationFilePath)
         {
@@ -28,7 +28,8 @@ namespace ControlPlane
 
             RC_XmlSchame tmp = new RC_XmlSchame();
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
-
+            _localPcIpAddress = tmp.XML_myIPAddress;
+            _myAreaName = tmp.XMP_myAreaName;
             //miejsce na przypisanie zmiennych
         }
         #endregion
@@ -144,6 +145,7 @@ namespace ControlPlane
         //graf jest aktualizowany z kazda informacja od LRM
         public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
         {
+            Console.WriteLine(availibleCapacity);
             var item = graph.Vertices.Find(x => x.Id == snppId);
             //przypadek kiedy wierzcholek jeszcze nie istnieje
             if (item == null)

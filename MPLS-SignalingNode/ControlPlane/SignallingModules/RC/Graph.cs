@@ -22,7 +22,8 @@ namespace ControlPlane
 
         public Graph()
         {
-
+            vertices = new List<Vertex>();
+            edges = new List<Edge>();
         }
 
     }

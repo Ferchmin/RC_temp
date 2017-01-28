@@ -11,8 +11,16 @@ namespace MPLS_SignalingNode
     {
         static void Main(string[] args)
         {
-            DeviceClass device = new DeviceClass();
-            device.StartWorking();
+            string end = null;
+            RC rc = new RC("rc_config.xml");
+            PC pc = new PC("pc_config.xml", rc);
+            do
+            {
+                end = Console.ReadLine();
+            }
+            while (end != "end");
+            //   DeviceClass device = new DeviceClass();
+            //  device.StartWorking();
         }
     }
 }
