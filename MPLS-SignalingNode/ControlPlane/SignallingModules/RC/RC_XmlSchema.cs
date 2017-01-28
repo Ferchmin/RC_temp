@@ -20,8 +20,15 @@ namespace ControlPlane
 
             [XmlElement("myAreaName")]
             public string XMP_myAreaName { get; set; }
-
-
+        public struct IPTOID
+        {
+            [XmlElement("IP")]
+            public string IP { get; set; }
+            [XmlElement("ID")]
+            public int ID { get; set; }
+        }
+        [XmlElement("IPTOID")]
+        public IPTOID[] Dictionary { get; set; }
         public RC_XmlSchame()
         {
         }

@@ -11,6 +11,7 @@ namespace ControlPlane
         private string _configurationFilePath;
         private string _localPcIpAddress;
         private string _myAreaName;
+        private Dictionary<string, int> IPTOIDDictionary;
         private Graph graph = new Graph();
         
         private PC _pc;
@@ -30,6 +31,10 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
+            foreach (var v in tmp.Dictionary)
+            {
+                IPTOIDDictionary.Add(v.IP, v.ID);
+            }
             //miejsce na przypisanie zmiennych
         }
         #endregion
