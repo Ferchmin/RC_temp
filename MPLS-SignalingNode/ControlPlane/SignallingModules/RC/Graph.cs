@@ -24,7 +24,6 @@ namespace ControlPlane
         {
 
         }
-        
-        //Dodaj metody addVertex i addEdge
+
     }
 }

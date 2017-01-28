@@ -50,11 +50,17 @@ namespace ControlPlane
             switch (message.General_SignalMessageType)
             {
                 case SignalMessage.SignalType.RouteQuery:
-                    if (message.CalledIpAddress != null)    //trzeba sprawdzić, bo jak tu będzie błąd to trzeba w CC ustawiać ten calledIpAddress na nulla
-                        RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity);
+                    if (message.CalledIpAddress != null)
+                        RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity); // Wewnatrzdomenowa wiad nr.1 
                     else
-                        RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity, message.General_SourceIpAddress);
+                        RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2
                     break;
+                        
+                 
+
+
+
+
                 case SignalMessage.SignalType.LocalTopology:
                     LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     break;
@@ -70,6 +76,7 @@ namespace ControlPlane
         //sourceIpadrees dodany w celach testowych!!!
         private void RouteQuery(int connectionID, string callingIpAddress, string calledIpAddress, int callingCapacity)
         {
+            /*
             if (connectionID == 111 && callingIpAddress == "127.0.1.101" && calledIpAddress == "127.0.1.102" && callingCapacity == 1000)
                 RouteQueryResponse(
                     111,
@@ -78,10 +85,28 @@ namespace ControlPlane
                         new SignalMessage.Pair() { first = 1, second = 2 }
                     },
                     null);
+            */
+
+
+            Dijkstra dijkstra = new Dijkstra();
+            
+            //Musimy pobrac Vertex.id uzywajac callingIpAddress i calledIpAddress ze slownika, potem uruchomic funkcje dijkstra.runAlgorithm(graph, vertex1, vertex2, callingCapacity)
+
 
         }
-        private void RouteQuery(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity, string sourceIpAddress)
+       
+        private void RouteQuery(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity)
         {
+
+            Dijkstra dijkstra = new Dijkstra();
+            //Musimy pobrac Vertex.id z snppIdPair, potem uruchomic dijkstra.runAlgorithm(graph,vertex1,vertex2,callingCapacity)
+            //Kris powiedzial ze otrzymaujemy wiadomosc bez sourceIpAddress
+
+
+
+/*
+            
+
             if (connectionID == 111 && snppIdPair.first == 1 && snppIdPair.second == 2 && callingCapacity == 1000 && sourceIpAddress == "127.0.1.201")
                 RouteQueryResponse(
                     111,
@@ -110,6 +135,9 @@ namespace ControlPlane
                         "SN_1_2",
                         "SN_1_3"
                     });
+
+            */
+
         }
         //klasa, ktora tworzy graf sieci
         //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
