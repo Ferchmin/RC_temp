@@ -11,7 +11,7 @@ namespace ControlPlane
         private string _configurationFilePath;
         private string _localPcIpAddress;
         private string _myAreaName;
-        private Dictionary<string, int> IPTOIDDictionary;
+       // private Dictionary<string, int> IPTOIDDictionary;
         private Graph graph = new Graph();
         
         private PC _pc;
@@ -31,9 +31,9 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
-            foreach (var v in tmp.Dictionary)
+        //    foreach (var v in tmp.Dictionary)
             {
-                IPTOIDDictionary.Add(v.IP, v.ID);
+         //       IPTOIDDictionary.Add(v.IP, v.ID);
             }
             //miejsce na przypisanie zmiennych
         }
@@ -105,6 +105,8 @@ namespace ControlPlane
         {
 
             Dijkstra dijkstra = new Dijkstra();
+            dijkstra.runAlgorithm(graph, graph.Vertices.Find(x => x.Id == 1), graph.Vertices.Find(x => x.Id == 4), 2);
+
             //Musimy pobrac Vertex.id z snppIdPair, potem uruchomic dijkstra.runAlgorithm(graph,vertex1,vertex2,callingCapacity)
             //Kris powiedzial ze otrzymaujemy wiadomosc bez sourceIpAddress
 
