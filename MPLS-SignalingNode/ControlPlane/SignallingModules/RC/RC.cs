@@ -5,7 +5,6 @@ using DTO.ControlPlane;
 
 namespace ControlPlane
 {
-    public delegate void MyDelegate(string area);
     class RC
     {
         #region Variables
@@ -190,7 +189,7 @@ namespace ControlPlane
             var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
             if (lrm == null)
             {
-                Lrm l = new Lrm(areaName);
+                Lrm l = new Lrm(areaName, this);
                 LRMs.Add(l);
             }
             else
