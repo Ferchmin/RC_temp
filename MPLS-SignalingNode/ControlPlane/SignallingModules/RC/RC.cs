@@ -11,6 +11,7 @@ namespace ControlPlane
         private string _configurationFilePath;
         private string _localPcIpAddress;
         private string _myAreaName;
+        private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
        // private Dictionary<string, int> IPTOIDDictionary;
         private Graph graph = new Graph();
         
@@ -68,7 +69,27 @@ namespace ControlPlane
 
 
                 case SignalMessage.SignalType.LocalTopology:
-                    LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
+                    /*
+                    if (_myAreaName.Equals("Domena_1"))
+                    {
+                        List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x > 199);
+                        message.LocalTopology_reachableSnppIdList.RemoveAll(x => x > 199);
+                        if (otherDomain != null)
+                            NetworkTopology(message.LocalTopology_SnppID, otherDomain);
+                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
+                    }
+                    else if (_myAreaName.Equals("Domena_2"))
+                    {
+                        List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x < 100);
+                        message.LocalTopology_reachableSnppIdList.RemoveAll(x => x < 100);
+                        if (otherDomain != null)
+                            NetworkTopology(message.LocalTopology_SnppID, otherDomain);
+                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
+                    }
+                    else
+                        */
+                        
+                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     break;
             }
         }
@@ -105,7 +126,7 @@ namespace ControlPlane
         {
 
             Dijkstra dijkstra = new Dijkstra();
-            dijkstra.runAlgorithm(graph, graph.Vertices.Find(x => x.Id == 1), graph.Vertices.Find(x => x.Id == 4), 2);
+            dijkstra.runAlgorithm(graph, graph.Vertices.Find(x => x.Id == 1), graph.Vertices.Find(x => x.Id == 3), 2);
 
             //Musimy pobrac Vertex.id z snppIdPair, potem uruchomic dijkstra.runAlgorithm(graph,vertex1,vertex2,callingCapacity)
             //Kris powiedzial ze otrzymaujemy wiadomosc bez sourceIpAddress
@@ -233,8 +254,9 @@ namespace ControlPlane
                                 weight = 1;
                                 capacity = Math.Min(item.Capacity, res.Capacity);
                             }
-                            Edge edge = new Edge(item, res, capacity, weight);
+                            Edge edge = new Edge(graph.Vertices.Find(x=> x.Id == snppId), graph.Vertices.Find(x=> x.Id == res.Id), capacity, weight);
                             graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
+                            graph.Edges.Add(edge);
                         }
                     }
                 }
@@ -250,46 +272,64 @@ namespace ControlPlane
                     {
                         string edgeID = Edge.CreateName(graph.Vertices.Find(x => x.Id == snppId), v);
                         var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                        if ((res == null) && !(v.Id.Equals(snppId.ToString())))
+                        if ((res == null) && (v.Id != snppId))
                         {
                             int capacity = int.MaxValue;
                             double weight = 0;
                             Edge edge = new Edge(graph.Vertices.Find(x => x.Id == snppId), graph.Vertices.Find(x => x.Id == v.Id), capacity, weight);
-                            graph.Vertices.Find(x => x.Id == v.Id).addEdgeOut(edge);
                             graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
+                            graph.Edges.Add(edge);
+                        }
+                        edgeID = Edge.CreateName(v, graph.Vertices.Find(x => x.Id == snppId));
+                        res = graph.Edges.Find(x => x.Id.Equals(edgeID));
+                        if ((res == null) && (v.Id != snppId))
+                        {
+                            int capacity = int.MaxValue;
+                            double weight = 0;
+                            Edge edge = new Edge(graph.Vertices.Find(x => x.Id == v.Id), graph.Vertices.Find(x => x.Id == snppId), capacity, weight);
+                            graph.Vertices.Find(x => x.Id == v.Id).addEdgeOut(edge);
                             graph.Edges.Add(edge);
                         }
                     }
                 }
             }
             //sprawdzam czy w kierunku SNPP, ktorego rozgloszenie wlasnie otrzymalismy, nie sa skierowane jakies sciezki widma
-            foreach (var v in graph.Vertices)
+            if (item != null)
             {
-                string edgeID = Edge.CreateName(v.Id, snppId);
-                var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                if(res != null)
+                foreach (var v in graph.Vertices)
                 {
-                    if(res.Weight == double.MaxValue)
+                    string edgeID = Edge.CreateName(v.Id, snppId);
+                    var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
+                    if (res != null)
                     {
-                        double weight;
-                        int capacity;
-                        if (v.AreaName.Equals(areaName))
+                        if (res.Weight == double.MaxValue)
                         {
-                            weight = 0;
-                            capacity = int.MaxValue;
+                            double weight;
+                            int capacity;
+                            if (v.AreaName.Equals(areaName))
+                            {
+                                weight = 0;
+                                capacity = int.MaxValue;
+                            }
+                            else
+                            {
+                                weight = 1;
+                                capacity = Math.Min(graph.Vertices.Find(x => x.Id == snppId).Capacity, res.Capacity);
+                            }
+                            graph.Edges.Find(x => x.Id.Equals(edgeID)).Capacity = capacity;
+                            graph.Edges.Find(x => x.Id.Equals(edgeID)).Weight = weight;
                         }
-                        else
-                        {
-                            weight = 1;
-                            capacity = Math.Min(item.Capacity, res.Capacity);
-                        }
-                        graph.Edges.Find(x => x.Id.Equals(edgeID)).Capacity = capacity;
-                        graph.Edges.Find(x => x.Id.Equals(edgeID)).Weight = weight;
                     }
                 }
             }
         }
 
+
+        public void NetworkTopology (int snppId, List<int> reachableSnppIdList)
+        {
+            foreach (var id in reachableSnppIdList)
+                interdomainLinks.Add(snppId, id);
+        }
         #endregion
 
 
