@@ -32,12 +32,17 @@ namespace ControlPlane
             _configurationFilePath = configurationFilePath;
 
             RC_XmlSchame tmp = new RC_XmlSchame();
+            Topology temp = new Topology();
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
             foreach (var v in tmp.Dictionary)
             {
                 IPTOIDDictionary.Add(v.IP, v.ID);
+            }
+            foreach (var v in tmp.LocalTopology)
+            {
+                LocalTopology(v.ID, v.capacity, v.reachableID, v.areaName);
             }
         }
         #endregion
