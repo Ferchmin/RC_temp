@@ -12,7 +12,7 @@ namespace ControlPlane
         private string _localPcIpAddress;
         private string _myAreaName;
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
-       // private Dictionary<string, int> IPTOIDDictionary;
+        private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Graph graph = new Graph();
         
         private PC _pc;
@@ -32,11 +32,10 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
-        //    foreach (var v in tmp.Dictionary)
+            foreach (var v in tmp.Dictionary)
             {
-         //       IPTOIDDictionary.Add(v.IP, v.ID);
+                IPTOIDDictionary.Add(v.IP, v.ID);
             }
-            //miejsce na przypisanie zmiennych
         }
         #endregion
 
@@ -58,15 +57,14 @@ namespace ControlPlane
             {
                 case SignalMessage.SignalType.RouteQuery:
                     if (message.CalledIpAddress != null)
+                    {
                         RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity); // Wewnatrzdomenowa wiad nr.1 
-                    else
+                    }else
+                    {
                         RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2
+                    }
+                       
                     break;
-                        
-                 
-
-
-
 
                 case SignalMessage.SignalType.LocalTopology:
                     
@@ -102,19 +100,17 @@ namespace ControlPlane
         //sourceIpadrees dodany w celach testowych!!!
         private void RouteQuery(int connectionID, string callingIpAddress, string calledIpAddress, int callingCapacity)
         {
-            /*
-            if (connectionID == 111 && callingIpAddress == "127.0.1.101" && calledIpAddress == "127.0.1.102" && callingCapacity == 1000)
-                RouteQueryResponse(
-                    111,
-                    new List<SignalMessage.Pair>()
-                    {
-                        new SignalMessage.Pair() { first = 1, second = 2 }
-                    },
-                    null);
-            */
+            SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
+            SNPPPair.first = IPTOIDDictionary[callingIpAddress];
+            SNPPPair.second = IPTOIDDictionary[calledIpAddress];
+
+            SignalMessage signalMessage = new SignalMessage();
+            signalMessage.SnppIdPair = SNPPPair;
+
+            RouteQueryResponse(connectionID, SNPPPair, signalMessage.ConnnectionID);
 
 
-            Dijkstra dijkstra = new Dijkstra();
+            //Dijkstra dijkstra = new Dijkstra();
             
             //Musimy pobrac Vertex.id uzywajac callingIpAddress i calledIpAddress ze slownika, potem uruchomic funkcje dijkstra.runAlgorithm(graph, vertex1, vertex2, callingCapacity)
 
@@ -125,46 +121,34 @@ namespace ControlPlane
         {
 
             Dijkstra dijkstra = new Dijkstra();
-            dijkstra.runAlgorithm(graph, graph.Vertices.Find(x => x.Id == 1), graph.Vertices.Find(x => x.Id == 3), 2);
+            Vertex begin = graph.Vertices.Find(x => x.Id == snppIdPair.first);
+            Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
-            //Musimy pobrac Vertex.id z snppIdPair, potem uruchomic dijkstra.runAlgorithm(graph,vertex1,vertex2,callingCapacity)
-            //Kris powiedzial ze otrzymaujemy wiadomosc bez sourceIpAddress
+            Vertex currentVertex = end;
+            List<Vertex> listOfVertices = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
+            listOfVertices.Reverse();
+
+            List<SignalMessage.Pair> snppIdPairs = new List<SignalMessage.Pair>();
+            List<string> areaNames = new List<string>();
+
+            while(currentVertex.Prev != begin)
+            {
+                SignalMessage.Pair pair = new SignalMessage.Pair();
+                pair.first = currentVertex.Id;
+                pair.second = currentVertex.Prev.Id;
+                snppIdPairs.Add(pair);
+                areaNames.Add(currentVertex.AreaName);
+                currentVertex = currentVertex.Prev.Prev;
+            }
+            SignalMessage.Pair lastPair = new SignalMessage.Pair();
+            lastPair.first = currentVertex.Id;
+            lastPair.second = currentVertex.Prev.Id;
+            snppIdPairs.Add(lastPair);
+            areaNames.Add(currentVertex.AreaName);
 
 
+            RouteQueryResponse(connectionID, snppIdPairs, areaNames);
 
-/*
-            
-
-            if (connectionID == 111 && snppIdPair.first == 1 && snppIdPair.second == 2 && callingCapacity == 1000 && sourceIpAddress == "127.0.1.201")
-                RouteQueryResponse(
-                    111,
-                    new List<SignalMessage.Pair>()
-                    {
-                        new SignalMessage.Pair() { first = 1, second = 11 },
-                        new SignalMessage.Pair() { first = 2, second = 12 }
-                    },
-                    new List<string>()
-                    {
-                        "SN_1"
-                    });
-            if (connectionID == 111 && snppIdPair.first == 1 && snppIdPair.second == 2 && callingCapacity == 1000 && sourceIpAddress == "127.0.1.202")
-                RouteQueryResponse(
-                    111,
-                    new List<SignalMessage.Pair>()
-                    {
-                        new SignalMessage.Pair() { first = 1, second = 11 },
-                        new SignalMessage.Pair() { first = 13, second = 31 },
-                        new SignalMessage.Pair() { first = 32, second = 22 },
-                        new SignalMessage.Pair() { first = 21, second = 2 }
-                    },
-                    new List<string>()
-                    {
-                        "SN_1_1",
-                        "SN_1_2",
-                        "SN_1_3"
-                    });
-
-            */
 
         }
         //klasa, ktora tworzy graf sieci
@@ -334,6 +318,7 @@ namespace ControlPlane
 
 
         #region Outcomming_Methodes_From_Standardization
+
         private void RouteQueryResponse(int connectionID, List<SignalMessage.Pair> includedSnppIdPairs, List<string> includedAreaNames)
         {
             SignalMessage message = new SignalMessage()
@@ -349,7 +334,24 @@ namespace ControlPlane
                 IncludedAreaNames = includedAreaNames
             };
 
-            //wysyłamy żądanie do RC
+            _pc.SendSignallingMessage(message);
+        }
+
+        private void RouteQueryResponse(int connectionID, SignalMessage.Pair snppPair, int callingCapacity)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.RouteQueryResponse,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "RC",
+                General_DestinationModule = "CC",
+
+                ConnnectionID = connectionID,
+                SnppIdPair = snppPair
+
+            };
+
             _pc.SendSignallingMessage(message);
         }
 

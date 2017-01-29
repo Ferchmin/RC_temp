@@ -54,11 +54,11 @@ namespace ControlPlane
 
 
         //Main methos with begin, end and capacity
-        public List<SignalMessage.Pair> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
+        public List<Vertex> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
         {
             graph = graph_;
 
-            List<SignalMessage.Pair> listOfPairs = new List<SignalMessage.Pair>();
+            List<Vertex> listOfVertices = new List<Vertex>();
             this.initialize(begin);
 
             List<Vertex> unvisitedVertices = graph.Vertices;
@@ -97,8 +97,8 @@ namespace ControlPlane
                 unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
             }
 
-            listOfPairs = generatePairs(begin, end);
-            return listOfPairs;
+            listOfVertices = generateVerticesList(begin, end);
+            return listOfVertices;
         }
 
         //Initializer, sets Wieght of every vertex to infinity, and the Weight of the begining node to 0
@@ -135,6 +135,24 @@ namespace ControlPlane
             return list;
         }
         
+        private List<Vertex> generateVerticesList(Vertex begin, Vertex end)
+        {
+            List<Vertex> listOfVertices = new List<Vertex>();
+            Vertex currentVertex = end;
+
+            while(currentVertex != begin)
+            {
+                if (currentVertex == null)
+                {
+                    return null;
+                }
+                listOfVertices.Add(currentVertex);
+                currentVertex = currentVertex.Prev;
+            }
+
+            listOfVertices.Add(begin);
+            return listOfVertices;
+        }
 
         private Path generatePath(Vertex begin, Vertex end)
         {
