@@ -178,8 +178,16 @@ namespace ControlPlane
 
             foreach(SignalMessage.Pair pair in snppIdPairs)
             {
-               Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
-                areaNames.Add(firstVertex.AreaName);
+                Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
+                Vertex secondVertex = graph.Vertices.Find(x => x.Id == pair.second);
+
+                if(!firstVertex.AreaName.Equals(_myAreaName))
+                {
+                    areaNames.Add(firstVertex.AreaName);
+                }else if(!secondVertex.AreaName.Equals(_myAreaName))
+                {
+                    areaNames.Add(secondVertex.AreaName);
+                }
             }
 
             RouteQueryResponse(connectionID, snppIdPairs, areaNames);
