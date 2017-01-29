@@ -14,7 +14,12 @@ namespace ControlPlane
             get { return id; }
             set { id = value; }
         }
-
+        private List<int> activeConnections = new List<int>();
+        public List<int> ActiveConnections
+        {
+            get { return activeConnections; }
+            set { activeConnections = value; }
+        }
         private Vertex begin;
         public Vertex Begin
         {

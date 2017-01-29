@@ -52,21 +52,24 @@ namespace DTO.ControlPlane
         #region SnppNegotiation_SnppNegotiationResponse
         public int Negotiation_ID { get; set; }
         public int Negotiation_ConnectionID { get; set; }
-        public int Negotiation_SnppID  { get; set; }
+        public int Negotiation_SnppID { get; set; }
         public int Negotiation_Label { get; set; }
         public int Negotiation_Capacity { get; set; }
 
         public SNP Negotiation_AllocatedSNP { get; set; }
         #endregion
 
-        #region 
+        #region LocalTopology
         public int LocalTopology_SnppID { get; set; }
         public int LocalTopology_availibleCapacity { get; set; }
         public List<int> LocalTopology_reachableSnppIdList { get; set; }
         public string LocalTopology_areaName { get; set; }
- 
+
         #endregion
 
+        #region IsUp/KeepAlive
+        public string IsUpKeepAlive_areaName {get; set;}
+        #endregion
         [Serializable]
         public enum ModuleType
         {
@@ -82,6 +85,7 @@ namespace DTO.ControlPlane
             //LRM
             LinkConnectionRequest, SNPNegotiation, LinkConnectionDealocation, SNPRealise, LocalTopology,
             LinkConnectionResponse, SNPNegotiationResponse, LinkConnectionDealocationResponse, SNPRealiseResponse, 
+            IsUp, KeepAlive,
 
             //CC
             ConnectionRequest, RouteQueryResponse, PeerCoordination,

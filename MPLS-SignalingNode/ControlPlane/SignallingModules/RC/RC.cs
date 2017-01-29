@@ -5,6 +5,7 @@ using DTO.ControlPlane;
 
 namespace ControlPlane
 {
+    public delegate void MyDelegate(string area);
     class RC
     {
         #region Variables
@@ -14,11 +15,14 @@ namespace ControlPlane
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Graph graph = new Graph();
-        
+        private List<Lrm> LRMs = new List<Lrm>();
         private PC _pc;
         #endregion
 
+        public RC()
+        {
 
+        }
         #region Main_Methodes
         public RC(string configurationFilePath)
         {
@@ -68,6 +72,18 @@ namespace ControlPlane
                     }
                        
                     break;
+
+                case SignalMessage.SignalType.IsUp:
+                    IsUp(message.IsUpKeepAlive_areaName);
+
+                    break;
+
+                case SignalMessage.SignalType.KeepAlive:
+                    KeepAlive(message.IsUpKeepAlive_areaName);
+                    break;
+
+
+
 
                 case SignalMessage.SignalType.LocalTopology:
                     
@@ -181,6 +197,27 @@ namespace ControlPlane
         //klasa, ktora tworzy graf sieci
         //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
         //graf jest aktualizowany z kazda informacja od LRM
+        public void IsUp(string areaName)
+        {
+            var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if (lrm == null)
+            {
+                Lrm l = new Lrm(areaName);
+                LRMs.Add(l);
+            }
+            else
+                KeepAlive(areaName);
+        }
+        public void KeepAlive(string areaName)
+        {
+            var item = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if(item != null)
+            {
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
+            }
+
+        }
         public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
         {
             Console.WriteLine(availibleCapacity);
@@ -250,8 +287,9 @@ namespace ControlPlane
                             {
                             }
                         }
-                        else
+                        else if (existingEdge == null)
                         {
+
                             double weight;
                             int capacity;
                             if (res.AreaName.Equals(areaName))
@@ -267,6 +305,24 @@ namespace ControlPlane
                             Edge edge = new Edge(graph.Vertices.Find(x=> x.Id == snppId), graph.Vertices.Find(x=> x.Id == res.Id), capacity, weight);
                             graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
                             graph.Edges.Add(edge);
+                        }
+                        else
+                        {
+                            double weight;
+                            int capacity;
+                            if (res.AreaName.Equals(areaName))
+                            {
+                                weight = 0;
+                                capacity = int.MaxValue;
+                            }
+                            else
+                            {
+                                weight = 1;
+                                capacity = Math.Min(item.Capacity, res.Capacity);
+                            }
+                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Capacity = capacity;
+                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Weight = weight;
+
                         }
                     }
                 }
@@ -403,6 +459,19 @@ namespace ControlPlane
 
 
 
+        #endregion
+
+        #region Other
+        public void OnNodeFailure(string areaName)
+        {
+            List<Vertex> v = graph.Vertices.FindAll(x => x.AreaName.Equals(areaName));
+            foreach (var ver in v)
+            {
+                graph.Edges.RemoveAll(x => x.Begin.Id == ver.Id);
+                graph.Edges.RemoveAll(x => x.End.Id == ver.Id);
+            }
+            graph.Vertices.RemoveAll(x => x.AreaName.Equals(areaName));
+        }
         #endregion
     }
 }

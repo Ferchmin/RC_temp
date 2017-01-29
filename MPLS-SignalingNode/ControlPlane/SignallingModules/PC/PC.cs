@@ -313,5 +313,6 @@ namespace ControlPlane
             return (SignalMessage)o;
         }
         #endregion
+
     }
 }
