@@ -48,6 +48,8 @@ namespace ControlPlane
             {
                 vertices.Add(vertex);
             }
+        }
+
         public Graph Copy(Graph graph)
         {
             Graph tmpGraph = new Graph();

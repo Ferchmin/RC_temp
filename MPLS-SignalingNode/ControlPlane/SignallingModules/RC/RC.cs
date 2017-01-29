@@ -18,6 +18,10 @@ namespace ControlPlane
         private PC _pc;
         #endregion
 
+        #region Properties
+        public PC LocalPC { set { _pc = value; } }
+        #endregion
+
         public RC()
         {
 
@@ -48,16 +52,11 @@ namespace ControlPlane
         #endregion
 
 
-        #region Properties
-        public PC LocalPC { set { _pc = value; } }
-        #endregion
-
-
         #region PC_Cooperation_Methodes
         private void SendMessageToPC(SignalMessage message)
         {
             _pc.SendSignallingMessage(message);
-            SignallingNodeDeviceClass.MakeSignallingLog("RC", "INFO - Signalling message send to PC module");
+            //SignallingNodeDeviceClass.MakeSignallingLog("RC", "INFO - Signalling message send to PC module");
         }
         public void ReceiveMessageFromPC(SignalMessage message)
         {
@@ -128,38 +127,57 @@ namespace ControlPlane
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
             
 
-            SignalMessage signalMessage = new SignalMessage();
+            //SignalMessage signalMessage = new SignalMessage();
 
             Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
 
+            List<string> areaNames = new List<string>();
+            List<SignalMessage.Pair> snppPairs = new List<SignalMessage.Pair>();
+
+            
+
             if (begin.AreaName.Equals(end.AreaName))
             {
-                RouteQueryResponse(connectionID, SNPPPair, signalMessage.CallingCapacity);
+                areaNames = null;
+                snppPairs.Add(SNPPPair);
+                RouteQueryResponse(connectionID, snppPairs, areaNames);
             }else
             {
-                RouteQueryResponse(connectionID, SNPPPair, end.AreaName);
+                areaNames.Add(end.AreaName);
+                snppPairs.Add(SNPPPair);
+                SignalMessage.Pair interdomainPair = new SignalMessage.Pair();
+                interdomainPair.first = end.Id;
+                interdomainPair.second = interdomainLinks[end.Id];
+                snppPairs.Add(interdomainPair);
+                RouteQueryResponse(connectionID, snppPairs, areaNames);
             }
         }
 
         public void RouteQuery(int connectionID, int snppInId, string calledIpAddress, int callingCapacity)
         {
 
-            SignalMessage signalMessage = new SignalMessage();
+            //SignalMessage signalMessage = new SignalMessage();
 
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = snppInId;
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
 
+            List<SignalMessage.Pair> localSnppPairs = new List<SignalMessage.Pair>();
+            localSnppPairs.Add(SNPPPair);
+
             Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
 
+            List<String> areaNames = new List<String>();
+            areaNames.Add(end.AreaName);
+
             if (begin.AreaName.Equals(end.AreaName))
             {
-                RouteQueryResponse(connectionID, SNPPPair, signalMessage.CallingCapacity);
+                RouteQueryResponse(connectionID, localSnppPairs, null);
             }else
             {
-                RouteQueryResponse(connectionID, SNPPPair, end.AreaName);
+                RouteQueryResponse(connectionID, localSnppPairs, areaNames);
             }
         }
 
@@ -171,27 +189,22 @@ namespace ControlPlane
             Vertex begin = graph.Vertices.Find(x => x.Id == snppIdPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
-
             List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
    
             List<string> areaNames = new List<string>();
 
             foreach(SignalMessage.Pair pair in snppIdPairs)
             {
-                Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
+                //Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
                 Vertex secondVertex = graph.Vertices.Find(x => x.Id == pair.second);
 
-                if(!firstVertex.AreaName.Equals(_myAreaName))
-                {
-                    areaNames.Add(firstVertex.AreaName);
-                }else if(!secondVertex.AreaName.Equals(_myAreaName))
+                if(!secondVertex.AreaName.Equals(_myAreaName))
                 {
                     areaNames.Add(secondVertex.AreaName);
                 }
             }
 
             RouteQueryResponse(connectionID, snppIdPairs, areaNames);
-
 
         }
         //klasa, ktora tworzy graf sieci
@@ -402,23 +415,7 @@ namespace ControlPlane
 
         #region Outcomming_Methodes_From_Standardization
 
-        private void RouteQueryResponse(int connectionID, List<SignalMessage.Pair> includedSnppIdPairs, List<string> includedAreaNames)
-        {
-            SignalMessage message = new SignalMessage()
-            {
-                General_SignalMessageType = SignalMessage.SignalType.RouteQueryResponse,
-                General_SourceIpAddress = _localPcIpAddress,
-                General_DestinationIpAddress = _localPcIpAddress,
-                General_SourceModule = "RC",
-                General_DestinationModule = "CC",
-
-                ConnnectionID = connectionID,
-                IncludedSnppIdPairs = includedSnppIdPairs,
-                IncludedAreaNames = includedAreaNames
-            };
-
-            _pc.SendSignallingMessage(message);
-        }
+        
 
         private void RouteQueryResponse(int connectionID, SignalMessage.Pair snppPair, int callingCapacity)
         {
@@ -438,7 +435,7 @@ namespace ControlPlane
             _pc.SendSignallingMessage(message);
         }
 
-        private void RouteQueryResponse(int connectionID,SignalMessage.Pair snppPair,string areaName)
+        private void RouteQueryResponse(int connectionID,List<SignalMessage.Pair> snppPair,List<string> areaName)
         {
             SignalMessage message = new SignalMessage()
             {
@@ -449,12 +446,12 @@ namespace ControlPlane
                 General_DestinationModule = "CC",
 
                 ConnnectionID = connectionID,
-                SnppIdPair = snppPair,
-                LocalTopology_areaName = areaName
+                IncludedSnppIdPairs = snppPair,
+                IncludedAreaNames = areaName
 
             };
 
-            _pc.SendSignallingMessage(message);
+            SendMessageToPC(message);
         }
 
 

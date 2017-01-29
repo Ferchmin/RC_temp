@@ -14,6 +14,10 @@ namespace MPLS_SignalingNode
             string end = null;
             RC rc = new RC("rc_config.xml");
             PC pc = new PC("pc_config.xml", rc);
+
+            rc.LocalPC = pc;
+
+
             do
             {
                 end = Console.ReadLine();
