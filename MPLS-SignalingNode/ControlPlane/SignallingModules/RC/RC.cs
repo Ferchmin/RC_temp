@@ -260,8 +260,9 @@ namespace ControlPlane
                             {
                             }
                         }
-                        else
+                        else if (existingEdge == null)
                         {
+
                             double weight;
                             int capacity;
                             if (res.AreaName.Equals(areaName))
@@ -277,6 +278,24 @@ namespace ControlPlane
                             Edge edge = new Edge(graph.Vertices.Find(x=> x.Id == snppId), graph.Vertices.Find(x=> x.Id == res.Id), capacity, weight);
                             graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
                             graph.Edges.Add(edge);
+                        }
+                        else
+                        {
+                            double weight;
+                            int capacity;
+                            if (res.AreaName.Equals(areaName))
+                            {
+                                weight = 0;
+                                capacity = int.MaxValue;
+                            }
+                            else
+                            {
+                                weight = 1;
+                                capacity = Math.Min(item.Capacity, res.Capacity);
+                            }
+                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Capacity = capacity;
+                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Weight = weight;
+
                         }
                     }
                 }
