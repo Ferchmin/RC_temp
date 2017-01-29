@@ -108,7 +108,7 @@ namespace ControlPlane
         public List<SignalMessage.Pair> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
         {
             graph = new Graph();
-            graph.Copy(graph_);
+            graph = graph_.Clone();
 
             List<SignalMessage.Pair> pairsOfVertices = new List<SignalMessage.Pair>();
             this.initialize(begin);

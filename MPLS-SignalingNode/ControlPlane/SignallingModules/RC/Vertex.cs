@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ControlPlane
 {
+    [Serializable]
     class Vertex
     {
         private int id;
