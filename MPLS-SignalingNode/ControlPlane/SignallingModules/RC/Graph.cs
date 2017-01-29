@@ -26,5 +26,13 @@ namespace ControlPlane
             edges = new List<Edge>();
         }
 
+        public Graph Copy(Graph graph)
+        {
+            Graph tmpGraph = new Graph();
+            tmpGraph.edges = graph.Edges;
+            tmpGraph.vertices = graph.Vertices;
+            return tmpGraph;
+        }
+
     }
 }
