@@ -12,12 +12,14 @@ namespace ControlPlane
         public List<Vertex> Vertices
         {
             get { return vertices; }
+            set { vertices = value; }
         }
 
         private List<Edge> edges;
         public List<Edge> Edges
         {
             get { return edges; }
+            set { edges = value; }
         }
 
         public Graph()
@@ -29,8 +31,8 @@ namespace ControlPlane
         public Graph Copy(Graph graph)
         {
             Graph tmpGraph = new Graph();
-            tmpGraph.edges = graph.Edges;
-            tmpGraph.vertices = graph.Vertices;
+            tmpGraph.Edges = graph.Edges;
+            tmpGraph.Vertices = graph.Vertices;
             return tmpGraph;
         }
 
