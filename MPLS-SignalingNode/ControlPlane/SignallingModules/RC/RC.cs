@@ -14,7 +14,7 @@ namespace ControlPlane
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
        // private Dictionary<string, int> IPTOIDDictionary;
         private Graph graph = new Graph();
-        
+        private List<Lrm> LRMs = new List<Lrm>();
         private PC _pc;
         #endregion
 
@@ -62,8 +62,15 @@ namespace ControlPlane
                     else
                         RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2
                     break;
-                        
-                 
+
+                case SignalMessage.SignalType.IsUp:
+                    IsUp(message.IsUpKeepAlive_areaName);
+
+                    break;
+
+                case SignalMessage.SignalType.KeepAlive:
+                    KeepAlive(message.IsUpKeepAlive_areaName);
+                    break;
 
 
 
@@ -102,6 +109,7 @@ namespace ControlPlane
         //sourceIpadrees dodany w celach testowych!!!
         private void RouteQuery(int connectionID, string callingIpAddress, string calledIpAddress, int callingCapacity)
         {
+
             /*
             if (connectionID == 111 && callingIpAddress == "127.0.1.101" && calledIpAddress == "127.0.1.102" && callingCapacity == 1000)
                 RouteQueryResponse(
@@ -170,6 +178,27 @@ namespace ControlPlane
         //klasa, ktora tworzy graf sieci
         //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
         //graf jest aktualizowany z kazda informacja od LRM
+        public void IsUp(string areaName)
+        {
+            var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if (lrm == null)
+            {
+                Lrm l = new Lrm(areaName);
+                LRMs.Add(l);
+            }
+            else
+                KeepAlive(areaName);
+        }
+        public void KeepAlive(string areaName)
+        {
+            var item = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if(item != null)
+            {
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
+            }
+
+        }
         public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
         {
             Console.WriteLine(availibleCapacity);
@@ -355,6 +384,19 @@ namespace ControlPlane
 
 
 
+        #endregion
+
+        #region Other
+        public void OnNodeFailure(string areaName)
+        {
+            List<Vertex> v = graph.Vertices.FindAll(x => x.AreaName.Equals(areaName));
+            foreach (var ver in v)
+            {
+                graph.Edges.RemoveAll(x => x.Begin.Id == ver.Id);
+                graph.Edges.RemoveAll(x => x.End.Id == ver.Id);
+            }
+            graph.Vertices.RemoveAll(x => x.AreaName.Equals(areaName));
+        }
         #endregion
     }
 }

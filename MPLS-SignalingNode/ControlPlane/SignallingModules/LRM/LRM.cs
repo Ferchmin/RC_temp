@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using DTO.ControlPlane;
+using System.Timers;
 
 namespace ControlPlane
 {
@@ -10,7 +11,7 @@ namespace ControlPlane
 
         #region Variables
         private string _configurationFilePath;
-
+        private string _myRcIpAddress;
         private string _localPcIpAddress;
         private string _areaName;
         private Dictionary<string, string> _lrmToSubnetworksDictionary;    //słownik zawierający nazwę podsieci wraz z przypisanej do niej adresem agenta LRM
@@ -34,6 +35,11 @@ namespace ControlPlane
         public LRM(string configurationFilePath)
         {
             InitialiseVariables(configurationFilePath);
+            IsUp();
+            System.Timers.Timer aTimer = new System.Timers.Timer();
+            aTimer.Elapsed += new ElapsedEventHandler(KeepAlive);
+            aTimer.Interval = 5000;
+            aTimer.Enabled = true;
         }
         private void InitialiseVariables(string configurationFilePath)
         {
@@ -52,7 +58,6 @@ namespace ControlPlane
             {
                 _lrmToSubnetworksDictionary.Add(element.areaName, element.ipAddress);
             }
-
             //tworzę słownik SNPP
             _snppList = schema.XML_SnppList;
 
@@ -747,6 +752,34 @@ namespace ControlPlane
                 LinkConnection_AllocatedSnpList = allocatedSnpList,
                 LinkConnection_AllocatedSnpAreaNameList = allocatedSnpAreaName
 
+            };
+            SendMessageToPC(rejectedResponse);
+        }
+        private void IsUp()
+        {
+            SignalMessage rejectedResponse = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.IsUp,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceIpAddress = _myRcIpAddress,
+                General_SourceModule = "LRM",
+                General_DestinationModule = "RC",
+
+                IsUpKeepAlive_areaName = _areaName,
+            };
+            SendMessageToPC(rejectedResponse);
+        }
+        public void KeepAlive(object source, ElapsedEventArgs e)
+        {
+            SignalMessage rejectedResponse = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.KeepAlive,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceIpAddress = _myRcIpAddress,
+                General_SourceModule = "LRM",
+                General_DestinationModule = "RC",
+
+                IsUpKeepAlive_areaName = _areaName,
             };
             SendMessageToPC(rejectedResponse);
         }
