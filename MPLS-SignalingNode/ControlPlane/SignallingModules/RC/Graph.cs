@@ -31,6 +31,23 @@ namespace ControlPlane
             edges = new List<Edge>();
         }
 
+        public Graph(Graph graph)
+        {
+            Edge[] tmpEdges = new Edge[graph.Edges.Count];
+            graph.Edges.CopyTo(tmpEdges);
+            edges = new List<Edge>();
+            foreach (Edge edge in tmpEdges)
+            {
+                edges.Add(edge);
+            }
+
+            Vertex[] tmpVertices = new Vertex[graph.Vertices.Count];
+            graph.Vertices.CopyTo(tmpVertices);
+            vertices = new List<Vertex>();
+            foreach (Vertex vertex in tmpVertices)
+            {
+                vertices.Add(vertex);
+            }
         public Graph Copy(Graph graph)
         {
             Graph tmpGraph = new Graph();
