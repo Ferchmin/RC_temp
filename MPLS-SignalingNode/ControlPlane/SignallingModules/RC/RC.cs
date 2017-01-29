@@ -5,6 +5,7 @@ using DTO.ControlPlane;
 
 namespace ControlPlane
 {
+    public delegate void MyDelegate(string area);
     class RC
     {
         #region Variables
@@ -18,7 +19,10 @@ namespace ControlPlane
         private PC _pc;
         #endregion
 
+        public RC()
+        {
 
+        }
         #region Main_Methodes
         public RC(string configurationFilePath)
         {
