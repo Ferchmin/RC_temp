@@ -69,7 +69,7 @@ namespace ControlPlane
 
 
                 case SignalMessage.SignalType.LocalTopology:
-                    /*
+                    
                     if (_myAreaName.Equals("Domena_1"))
                     {
                         List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x > 199);
@@ -87,8 +87,7 @@ namespace ControlPlane
                         LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     }
                     else
-                        */
-                        
+                                        
                         LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     break;
             }
