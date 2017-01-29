@@ -59,12 +59,15 @@ namespace ControlPlane
             switch (message.General_SignalMessageType)
             {
                 case SignalMessage.SignalType.RouteQuery:
-                    if (message.CalledIpAddress != null)
+                    if (message.CallingIpAddress != null)
                     {
-                        RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity); // Wewnatrzdomenowa wiad nr.1 
+                        RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity); // Wewnatrzdomenowa wiad nr 1 i miedzydomenowa nr 1
+                    }else if(message.CalledIpAddress != null)
+                    {
+                        RouteQuery(message.ConnnectionID, message.SnppInId, message.CalledIpAddress, message.CallingCapacity); // Miedzydomenowa wiad nr 3
                     }else
                     {
-                        RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2
+                        RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2 i miedzydomenowa nr 2
                     }
                        
                     break;
@@ -112,26 +115,50 @@ namespace ControlPlane
 
 
         #region Incomming_Methodes_From_Standardization
-        //sourceIpadrees dodany w celach testowych!!!
+
         private void RouteQuery(int connectionID, string callingIpAddress, string calledIpAddress, int callingCapacity)
         {
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = IPTOIDDictionary[callingIpAddress];
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
+            
 
             SignalMessage signalMessage = new SignalMessage();
-            signalMessage.SnppIdPair = SNPPPair;
 
-            RouteQueryResponse(connectionID, SNPPPair, signalMessage.ConnnectionID);
+            Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
+            Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
 
-
-            //Dijkstra dijkstra = new Dijkstra();
-            
-            //Musimy pobrac Vertex.id uzywajac callingIpAddress i calledIpAddress ze slownika, potem uruchomic funkcje dijkstra.runAlgorithm(graph, vertex1, vertex2, callingCapacity)
-
-
+            if (begin.AreaName.Equals(end.AreaName))
+            {
+                RouteQueryResponse(connectionID, SNPPPair, signalMessage.CallingCapacity);
+            }else
+            {
+                RouteQueryResponse(connectionID, SNPPPair, end.AreaName);
+            }
         }
-       
+
+        public void RouteQuery(int connectionID, int snppInId, string calledIpAddress, int callingCapacity)
+        {
+
+            SignalMessage signalMessage = new SignalMessage();
+
+            SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
+            SNPPPair.first = snppInId;
+            SNPPPair.second = IPTOIDDictionary[calledIpAddress];
+
+            Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
+            Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
+
+            if (begin.AreaName.Equals(end.AreaName))
+            {
+                RouteQueryResponse(connectionID, SNPPPair, signalMessage.CallingCapacity);
+            }else
+            {
+                RouteQueryResponse(connectionID, SNPPPair, end.AreaName);
+            }
+        }
+
+
         private void RouteQuery(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity)
         {
 
@@ -404,6 +431,25 @@ namespace ControlPlane
 
                 ConnnectionID = connectionID,
                 SnppIdPair = snppPair
+
+            };
+
+            _pc.SendSignallingMessage(message);
+        }
+
+        private void RouteQueryResponse(int connectionID,SignalMessage.Pair snppPair,string areaName)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.RouteQueryResponse,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "RC",
+                General_DestinationModule = "CC",
+
+                ConnnectionID = connectionID,
+                SnppIdPair = snppPair,
+                LocalTopology_areaName = areaName
 
             };
 
