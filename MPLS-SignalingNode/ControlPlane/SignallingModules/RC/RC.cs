@@ -167,28 +167,16 @@ namespace ControlPlane
             Vertex begin = graph.Vertices.Find(x => x.Id == snppIdPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
-            Vertex currentVertex = end;
-            List<Vertex> listOfVertices = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
-            listOfVertices.Reverse();
 
-            List<SignalMessage.Pair> snppIdPairs = new List<SignalMessage.Pair>();
+            List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
+   
             List<string> areaNames = new List<string>();
 
-            while(currentVertex.Prev != begin)
+            foreach(SignalMessage.Pair pair in snppIdPairs)
             {
-                SignalMessage.Pair pair = new SignalMessage.Pair();
-                pair.first = currentVertex.Id;
-                pair.second = currentVertex.Prev.Id;
-                snppIdPairs.Add(pair);
-                areaNames.Add(currentVertex.AreaName);
-                currentVertex = currentVertex.Prev.Prev;
+               Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
+                areaNames.Add(firstVertex.AreaName);
             }
-            SignalMessage.Pair lastPair = new SignalMessage.Pair();
-            lastPair.first = currentVertex.Id;
-            lastPair.second = currentVertex.Prev.Id;
-            snppIdPairs.Add(lastPair);
-            areaNames.Add(currentVertex.AreaName);
-
 
             RouteQueryResponse(connectionID, snppIdPairs, areaNames);
 
