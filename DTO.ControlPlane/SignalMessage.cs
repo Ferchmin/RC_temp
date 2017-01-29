@@ -33,6 +33,7 @@ namespace DTO.ControlPlane
         public int LabelIN { get; set; }
         public int LabelOUT { get; set; }
         public int ModificationID { get; set; }
+        public int SnppInId { get; set; }
         public Pair SnppIdPair { get; set; }
         public SNP SnpIn { get; set; }
         public SNP SnpOut { get; set; }
