@@ -40,9 +40,12 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
-            foreach (var v in tmp.Dictionary)
+            if (tmp.Dictionary != null)
             {
-                IPTOIDDictionary.Add(v.IP, v.ID);
+                foreach (var v in tmp.Dictionary)
+                {
+                    IPTOIDDictionary.Add(v.IP, v.ID);
+                }
             }
             foreach (var v in tmp.LocalTopology)
             {
