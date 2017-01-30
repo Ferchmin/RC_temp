@@ -14,7 +14,6 @@ namespace ControlPlane
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Graph graph = new Graph();
-        private List<Lrm> LRMs = new List<Lrm>();
         private PC _pc;
         #endregion
 
@@ -78,19 +77,10 @@ namespace ControlPlane
                     }
                        
                     break;
-
-                case SignalMessage.SignalType.IsUp:
-                    IsUp(message.IsUpKeepAlive_areaName);
-
+                case SignalMessage.SignalType.RouteQueryFailure:
+                    OnNodeFailure(message.LocalTopology_areaName);
+                    RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity);
                     break;
-
-                case SignalMessage.SignalType.KeepAlive:
-                    KeepAlive(message.IsUpKeepAlive_areaName);
-                    break;
-
-
-
-
                 case SignalMessage.SignalType.LocalTopology:
                     
                     if (_myAreaName.Equals("Domena_1"))
@@ -213,6 +203,7 @@ namespace ControlPlane
         //klasa, ktora tworzy graf sieci
         //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
         //graf jest aktualizowany z kazda informacja od LRM
+        /*
         public void IsUp(string areaName)
         {
             var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
@@ -234,6 +225,7 @@ namespace ControlPlane
             }
 
         }
+        */
         public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
         {
             Console.WriteLine(availibleCapacity);
@@ -472,6 +464,8 @@ namespace ControlPlane
             }
             graph.Vertices.RemoveAll(x => x.AreaName.Equals(areaName));
         }
+
+
         #endregion
     }
 }

@@ -10,6 +10,7 @@ namespace ControlPlane
 {
     class Lrm
     {
+        /*
         private delegate void MyDelegate(string area);
         RC rc;
         private string areaName;
@@ -54,5 +55,6 @@ namespace ControlPlane
             MyDelegate del = (MyDelegate)ar.AsyncDelegate;
             del.EndInvoke(async);
         }
+        */
     }
 }

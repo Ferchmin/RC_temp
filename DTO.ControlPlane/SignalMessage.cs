@@ -88,8 +88,9 @@ namespace DTO.ControlPlane
             IsUp, KeepAlive,
 
             //CC
-            ConnectionRequest, RouteQueryResponse, PeerCoordination,
+            ConnectionRequest, RouteQueryResponse, PeerCoordination, RouteQueryFailure,
             ConnectionResponse, RouteQuery, PeerCoordinationOut
+
         };
 
         [Serializable]
