@@ -53,58 +53,6 @@ namespace ControlPlane
 
 
 
-        //Main methos with begin, end and capacity
-
-        /*
-    public List<Vertex> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
-    {
-        graph = graph_;
-
-        List<Vertex> listOfVertices = new List<Vertex>();
-        this.initialize(begin);
-
-        List<Vertex> unvisitedVertices = graph.Vertices;
-        unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
-
-        while (unvisitedVertices.Count != 0)
-        {
-            Vertex currentVertex = unvisitedVertices.First();
-            unvisitedVertices.Remove(currentVertex);
-            if (currentVertex.CumulatedWeight == infinity)
-            {
-                break;
-            }
-
-            foreach (Edge e in currentVertex.EdgesOut)
-            {
-
-                Vertex neighbor = e.End;
-
-                if (neighbor.Capacity >= capacity)
-                {
-                    if (neighbor.CumulatedWeight > currentVertex.CumulatedWeight + e.Weight)
-                    {
-                        neighbor.CumulatedWeight = currentVertex.CumulatedWeight + e.Weight;
-                        neighbor.Prev = currentVertex;
-                    }
-                }
-                else
-                {
-                    neighbor.CumulatedWeight = infinity;
-                }
-
-
-            }
-
-            unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
-        }
-
-        listOfVertices = generateVerticesList(begin, end);
-        return listOfVertices;
-    }
-    */
-
-
         public List<SignalMessage.Pair> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
         {
             graph = new Graph(graph_);
@@ -148,11 +96,11 @@ namespace ControlPlane
                 unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
             }
 
-            pairsOfVertices = generatePairs2(begin, end);
+            pairsOfVertices = generatePairs(begin, end);
             return pairsOfVertices;
         }
 
-        private List<SignalMessage.Pair> generatePairs2(Vertex begin, Vertex end)
+        private List<SignalMessage.Pair> generatePairs(Vertex begin, Vertex end)
         {
             List<SignalMessage.Pair> list = new List<SignalMessage.Pair>();
             Vertex currentVertex = end;
@@ -190,34 +138,6 @@ namespace ControlPlane
 
         }
 
-        
-        private List<SignalMessage.Pair> generatePairs(Vertex begin, Vertex end)
-        {
-            List<SignalMessage.Pair> list = new List<SignalMessage.Pair>();
-            Vertex currentVertex = end;
-
-            while(currentVertex != begin)
-            {
-                if(currentVertex == null)
-                {
-                    return null;
-                }
-                foreach(Edge edge in currentVertex.EdgesOut)
-                {
-                    if(edge.End == currentVertex.Prev)
-                    {
-                        if(edge.Weight != 0)
-                        {
-                            SignalMessage.Pair pair = new SignalMessage.Pair() { first = currentVertex.Id, second = currentVertex.Prev.Id };
-                            list.Insert(0, pair);
-                        }
-                        currentVertex = currentVertex.Prev;
-                    }
-                }
-            }
-            return list;
-        }
-        
         private List<Vertex> generateVerticesList(Vertex begin, Vertex end)
         {
             List<Vertex> listOfVertices = new List<Vertex>();
