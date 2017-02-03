@@ -16,6 +16,9 @@ namespace ControlPlane
         [XmlElement("myAreaName")]
         public string XMP_myAreaName { get; set; }
 
+        [XmlElement("DomainIpAddress")]
+        public string XMP_DomainIpAddress { get; set; }
+
         public struct SN_1TODomain
         {
             [XmlElement("ID_SN_1")]

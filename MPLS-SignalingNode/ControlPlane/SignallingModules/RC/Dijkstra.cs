@@ -11,7 +11,14 @@ namespace ControlPlane
     {
         private const double infinity = double.MaxValue;
         private Graph graph;
+        private string _myAreaName;
 
+        public Dijkstra(string myAreaName)
+        {
+            _myAreaName = myAreaName;
+        }
+
+        /*
         public Path runAlgorithm(Graph graph_, Vertex begin, Vertex end)
         {
             graph = graph_;
@@ -50,7 +57,7 @@ namespace ControlPlane
             shortestPath = generatePath(begin, end);
             return shortestPath;
         }
-
+        */
 
 
         public List<SignalMessage.Pair> runAlgorithm(Graph graph_, Vertex begin, Vertex end, int capacity)
@@ -99,6 +106,97 @@ namespace ControlPlane
             pairsOfVertices = generatePairs(begin, end);
             return pairsOfVertices;
         }
+
+        public PathInfo runAlgorithm(Graph graph_, Vertex begin, Vertex end)
+        {
+            graph = new Graph(graph_);
+            PathInfo pathInfo = new PathInfo();
+
+            List<SignalMessage.Pair> pairsOfVertices = new List<SignalMessage.Pair>();
+            this.initialize(begin);
+
+            List<Vertex> unvisitedVertices = graph.Vertices;
+            unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
+
+            while (unvisitedVertices.Count != 0)
+            {
+                Vertex currentVertex = unvisitedVertices.First();
+                unvisitedVertices.Remove(currentVertex);
+                if (currentVertex.CumulatedWeight == infinity)
+                {
+                    break;
+                }
+
+                foreach (Edge e in currentVertex.EdgesOut)
+                {
+                    Vertex neighbor = e.End;
+                    if (neighbor.CumulatedWeight > currentVertex.CumulatedWeight + e.Weight)
+                    {
+                        neighbor.CumulatedWeight = currentVertex.CumulatedWeight + e.Weight;
+                        pathInfo.Capacity = Math.Min(currentVertex.Capacity, currentVertex.Prev.Capacity);
+                        neighbor.Prev = currentVertex;
+                    }
+
+                }
+
+                unvisitedVertices.Sort((x, y) => x.CumulatedWeight.CompareTo(y.CumulatedWeight));
+            }
+
+            Vertex vertexForPath = end;
+            bool didFindPath = true;
+            while (vertexForPath != begin)
+            {
+                if (vertexForPath.Prev == null)
+                {
+                    didFindPath = false;
+                }
+                else
+                {
+                    vertexForPath = vertexForPath.Prev;
+                }
+            }
+
+            pathInfo.Weight = end.CumulatedWeight;
+            pathInfo.beginEnd.first = begin.Id;
+            pathInfo.beginEnd.second = end.Id;
+            pathInfo.AreaName = _myAreaName;
+
+            if (didFindPath)
+            {
+                return pathInfo;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public List<PathInfo> runAlgorithmForAll(Graph graph)
+        {
+            List<PathInfo> pathsInfo = new List<PathInfo>();
+            foreach (Vertex begin in graph.Vertices)
+            {
+                if (begin.AreaName.Equals(_myAreaName))
+                {
+                    foreach (Vertex end in graph.Vertices)
+                    {
+                        if (end.AreaName.Equals(_myAreaName))
+                        {
+                            if (end.Id != begin.Id)
+                            {
+                                PathInfo pathInfo = runAlgorithm(graph, begin, end);
+                                if(pathInfo != null)
+                                {
+                                    pathsInfo.Add(pathInfo);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return pathsInfo;
+        }
+
 
         private List<SignalMessage.Pair> generatePairs(Vertex begin, Vertex end)
         {

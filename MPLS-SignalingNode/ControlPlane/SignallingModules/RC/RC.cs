@@ -11,6 +11,7 @@ namespace ControlPlane
         private string _configurationFilePath;
         private string _localPcIpAddress;
         private string _myAreaName;
+        private string _domainIpAddress;
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Dictionary<int, int> SN_1ToDomain = new Dictionary<int, int>();
@@ -34,6 +35,13 @@ namespace ControlPlane
         {
             InitialiseVariables(configurationFilePath);
             graph = createGraph(abstractVertices);
+            Dijkstra dijkstra = new Dijkstra(_myAreaName);
+            List<PathInfo> pathsInfo = new List<PathInfo>();
+            pathsInfo = dijkstra.runAlgorithmForAll(graph);
+            foreach(PathInfo pathInfo in pathsInfo)
+            {
+                LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+            }
         }
         private void InitialiseVariables(string configurationFilePath)
         {
@@ -44,6 +52,7 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
+            _domainIpAddress = tmp.XMP_DomainIpAddress;
             if(_myAreaName.Equals("Dom1"))
             {
                 if (tmp.Translate1 != null)
@@ -232,7 +241,7 @@ namespace ControlPlane
         private void RouteQuery(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity)
         {
 
-            Dijkstra dijkstra = new Dijkstra();
+            Dijkstra dijkstra = new Dijkstra(_myAreaName);
             Vertex begin = graph.Vertices.Find(x => x.Id == snppIdPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
