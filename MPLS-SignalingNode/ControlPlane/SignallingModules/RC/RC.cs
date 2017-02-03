@@ -262,8 +262,14 @@ namespace ControlPlane
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
             List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
-
             List<string> areaNames = new List<string>();
+
+            if(snppIdPairs == null)
+            {
+                RouteQueryResponse(connectionID, snppIdPairs, areaNames);
+                return;
+            }
+
 
             foreach (SignalMessage.Pair pair in snppIdPairs)
             {
