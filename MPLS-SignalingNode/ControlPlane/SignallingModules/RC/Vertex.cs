@@ -52,31 +52,23 @@ namespace ControlPlane
             }
         }
 
-        private Edge[] edgesOut;
-        public Edge[] EdgesOut
+        private List<Edge> edgesOut;
+        public List<Edge> EdgesOut
         {
             get { return edgesOut; }
-        }
-
-        public void addEdgeOut(Edge edge)
-        {
-            Edge[] tmp_links = new Edge[edgesOut.Length + 1];
-            for (int i = 0; i < edgesOut.Length; i++)
-                tmp_links[i] = edgesOut[i];
-            tmp_links[edgesOut.Length] = edge;
-            edgesOut = tmp_links;
+            set { edgesOut = value; }
         }
 
         public Vertex()
         {
             this.id = 0;
-            this.edgesOut = new Edge[0];
+            this.edgesOut = new List<Edge>();
         }
 
         public Vertex(int id, int capacity, double weight, string areaName)
         {
             this.id = id;
-            this.edgesOut = new Edge[0];
+            this.edgesOut = new List<Edge>();
             this.capacity = capacity;
             this.weight = weight;
             this.areaName = areaName;

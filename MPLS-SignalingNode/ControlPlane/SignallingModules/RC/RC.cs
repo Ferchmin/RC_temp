@@ -38,7 +38,7 @@ namespace ControlPlane
             Dijkstra dijkstra = new Dijkstra(_myAreaName);
             List<PathInfo> pathsInfo = new List<PathInfo>();
             pathsInfo = dijkstra.runAlgorithmForAll(graph);
-            foreach(PathInfo pathInfo in pathsInfo)
+            foreach (PathInfo pathInfo in pathsInfo)
             {
                 LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
             }
@@ -53,7 +53,7 @@ namespace ControlPlane
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
             _domainIpAddress = tmp.XMP_DomainIpAddress;
-            if(_myAreaName.Equals("Dom1"))
+            if (_myAreaName.Equals("Dom1"))
             {
                 if (tmp.Translate1 != null)
                 {
@@ -113,7 +113,7 @@ namespace ControlPlane
                         if (end != null)
                         {
                             Edge edge = new Edge(currentVertex, end, tmpAbstractVertex.Capacity, tmpAbstractVertex.Weight);
-                            currentVertex.addEdgeOut(edge);
+                            currentVertex.EdgesOut.Add(edge);
                             graph.Edges.Add(edge);
                         }
 
@@ -154,22 +154,25 @@ namespace ControlPlane
                     }
 
                     break;
-/*
-                case SignalMessage.SignalType.IsUp:
-                    IsUp(message.IsUpKeepAlive_areaName);
-
+                case SignalMessage.SignalType.RemoteTopologyStatus:
+                    RemoteTopologyStatus(message.AreaName);
                     break;
+                /*
+                                case SignalMessage.SignalType.IsUp:
+                                    IsUp(message.IsUpKeepAlive_areaName);
 
-                case SignalMessage.SignalType.KeepAlive:
-                    KeepAlive(message.IsUpKeepAlive_areaName);
-                    break;
-*/
+                                    break;
 
-                
+                                case SignalMessage.SignalType.KeepAlive:
+                                    KeepAlive(message.IsUpKeepAlive_areaName);
+                                    break;
+                */
+
+
                 case SignalMessage.SignalType.LocalTopology:
                     LocalTopology(message.SnppIdPair, message.LocalTopology_weight, message.LocalTopology_availibleCapacity, message.AreaName);
                     break;
-                    
+
             }
         }
 
@@ -238,6 +241,8 @@ namespace ControlPlane
         }
 
 
+
+
         private void RouteQuery(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity)
         {
 
@@ -263,7 +268,16 @@ namespace ControlPlane
             RouteQueryResponse(connectionID, snppIdPairs, areaNames);
 
         }
-
+        private void RemoteTopologyStatus(string areaName)
+        {
+            foreach (var vertex in graph.Vertices)
+            {
+                vertex.EdgesOut.RemoveAll(x => x.End.AreaName.Equals(areaName));
+            }
+            graph.Vertices.RemoveAll(x => x.AreaName.Equals(areaName));
+            graph.Edges.RemoveAll(x => x.Begin.AreaName.Equals(areaName));
+            graph.Edges.RemoveAll(x => x.End.AreaName.Equals(areaName));
+        }
         private void LocalTopology(SignalMessage.Pair snppIdPair, double weight, int avaibleCapacity, string areaName)
         {
             int first = SN_1ToDomain[snppIdPair.first];
@@ -271,7 +285,7 @@ namespace ControlPlane
             if (((graph.Vertices.Find(x => x.Id == first)) != null) && ((graph.Vertices.Find(x => x.Id == second)) != null))
             {
                 Edge edge = new Edge(graph.Vertices.Find(x => x.Id == first), graph.Vertices.Find(x => x.Id == second), avaibleCapacity, weight);
-                graph.Vertices.Find(x => x.Id == first).addEdgeOut(edge);
+                graph.Vertices.Find(x => x.Id == first).EdgesOut.Add(edge);
                 graph.Edges.Add(edge);
             }
         }
@@ -280,8 +294,8 @@ namespace ControlPlane
             var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
             if (lrm == null)
             {
-               // Lrm l = new Lrm(areaName, this);
-              //  LRMs.Add(l);
+                // Lrm l = new Lrm(areaName, this);
+                //  LRMs.Add(l);
             }
             else
                 KeepAlive(areaName);
@@ -296,9 +310,6 @@ namespace ControlPlane
             }
 
         }
-        
-
-
         public void NetworkTopology(int snppId, List<int> reachableSnppIdList)
         {
             foreach (var id in reachableSnppIdList)

@@ -94,10 +94,6 @@ namespace ControlPlane
                 case SignalMessage.SignalType.ConnectionResponse:
                     ConnectionResponse_Analyse(message.ConnnectionID, message.IsAccepted);
                     break;
-
-                case SignalMessage.SignalType.RouteQoueryFailureResponse:
-                    RouteQueryFailureResponse(message.ConnnectionID, message.IncludedSnppIdPairs, message.IncludedAreaNames);
-                    break;
                 case SignalMessage.SignalType.ConnectionFailure:
 
                     break;
@@ -539,24 +535,6 @@ namespace ControlPlane
             //wysyłam wiadomość
             _pc.SendSignallingMessage(message);
         }
-        private void RouteQueryFailure(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity, string areaName)
-        {
-            SignalMessage message = new SignalMessage()
-            {
-                General_SignalMessageType = SignalMessage.SignalType.RouteQueryFailure,
-                General_SourceIpAddress = _localPcIpAddress,
-                General_DestinationIpAddress = _localPcIpAddress,
-                General_SourceModule = "CC",
-                General_DestinationModule = "RC",
-
-                ConnnectionID = connectionID,
-                SnppIdPair = snppIdPair,
-                CallingCapacity = callingCapacity
-            };
-
-            //wysyłam wiadomość
-            _pc.SendSignallingMessage(message);
-        }
         private void LinkConnectionRequest(int connectionID, SignalMessage.Pair connectionSnppIdPair, int callingCapacity)
         {
             SignalMessage message = new SignalMessage()
@@ -662,6 +640,22 @@ namespace ControlPlane
             //wysyłamy żądanie do RC
             _pc.SendSignallingMessage(message);
         }
+        private void RemoteTopologyStatus(string areaName)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.ConnectionResponse,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "CC",
+                General_DestinationModule = "RC",
+
+                AreaName = areaName,
+            };
+
+            //wysyłamy żądanie do RC
+            _pc.SendSignallingMessage(message);
+        }
         #endregion
 
         #region Other_Methodes
@@ -696,13 +690,14 @@ namespace ControlPlane
 
         public void OnNodeFailure(string areaName)
         {
+            RemoteTopologyStatus(areaName);
             foreach (var record in _connectionsList)
             {
                 var res = record.AllocatedSnpAreaName.Find(x => x.Equals(areaName));
                 if (res != null)
                 {
                     SignalMessage.Pair pair = new SignalMessage.Pair() { first = record.LocalBoundaryFirstSnppID, second = record.LocalBoundarySecondSnppID };
-                    RouteQueryFailure(record.ConnectionID, pair, record.AllocatedCapacity, areaName);
+                    RouteQuery(record.ConnectionID, pair, record.AllocatedCapacity);
                 }
             }
 
