@@ -2,6 +2,7 @@
 using MPLS_SignalingNode;
 using System.Collections.Generic;
 using DTO.ControlPlane;
+using System.Threading;
 
 namespace ControlPlane
 {
@@ -31,18 +32,26 @@ namespace ControlPlane
 
         }
         #region Main_Methodes
+
         public RC(string configurationFilePath)
         {
             InitialiseVariables(configurationFilePath);
             graph = createGraph(abstractVertices);
             Dijkstra dijkstra = new Dijkstra(_myAreaName);
             List<PathInfo> pathsInfo = new List<PathInfo>();
-            pathsInfo = dijkstra.runAlgorithmForAll(graph);
-            foreach(PathInfo pathInfo in pathsInfo)
+
+            if (!_myAreaName.Contains("Dom"))
             {
-                LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                pathsInfo = dijkstra.runAlgorithmForAll(graph);
+                foreach (PathInfo pathInfo in pathsInfo)
+                {
+                    Thread.Sleep(20);
+                    LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                }
             }
+            
         }
+
         private void InitialiseVariables(string configurationFilePath)
         {
             _configurationFilePath = configurationFilePath;
