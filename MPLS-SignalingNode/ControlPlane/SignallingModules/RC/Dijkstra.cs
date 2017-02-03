@@ -212,7 +212,7 @@ namespace ControlPlane
 
                 String edgeId = Edge.CreateName(currentVertex.Prev, currentVertex);
                 Edge tmpEdge = graph.Edges.Find(x => x.Id == edgeId);
-                if (tmpEdge.Weight != 0)
+                if (!tmpEdge.SubDomain)
                 {
                     SignalMessage.Pair pair = new SignalMessage.Pair() { first = currentVertex.Prev.Id, second = currentVertex.Id };
                     list.Insert(0, pair);

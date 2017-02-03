@@ -47,6 +47,18 @@ namespace ControlPlane
             get { return capacity;}
             set { capacity = value; }
         }
+        private bool subDomain;
+        public bool SubDomain
+        {
+            get
+            {
+                return subDomain;
+            }
+            set
+            {
+                subDomain = value;
+            }
+        }
         public Edge(Vertex begin, Vertex end, int capacity, double weight)
         {
             this.id = CreateName(begin, end);
@@ -54,6 +66,7 @@ namespace ControlPlane
             this.end = end;
             this.weight = weight;
             this.capacity = capacity;
+            this.subDomain = false;
         }
         public static string CreateName(Vertex begin, Vertex end)
         {

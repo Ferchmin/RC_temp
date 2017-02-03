@@ -2,6 +2,7 @@
 using MPLS_SignalingNode;
 using System.Collections.Generic;
 using DTO.ControlPlane;
+using System.Threading;
 
 namespace ControlPlane
 {
@@ -31,18 +32,26 @@ namespace ControlPlane
 
         }
         #region Main_Methodes
+
         public RC(string configurationFilePath)
         {
             InitialiseVariables(configurationFilePath);
             graph = createGraph(abstractVertices);
             Dijkstra dijkstra = new Dijkstra(_myAreaName);
             List<PathInfo> pathsInfo = new List<PathInfo>();
-            pathsInfo = dijkstra.runAlgorithmForAll(graph);
-            foreach (PathInfo pathInfo in pathsInfo)
+
+            if (!_myAreaName.Contains("Dom"))
             {
-                LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                pathsInfo = dijkstra.runAlgorithmForAll(graph);
+                foreach (PathInfo pathInfo in pathsInfo)
+                {
+                    Thread.Sleep(20);
+                    LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                }
             }
+            
         }
+
         private void InitialiseVariables(string configurationFilePath)
         {
             _configurationFilePath = configurationFilePath;
@@ -113,7 +122,14 @@ namespace ControlPlane
                         if (end != null)
                         {
                             Edge edge = new Edge(currentVertex, end, tmpAbstractVertex.Capacity, tmpAbstractVertex.Weight);
-                            currentVertex.EdgesOut.Add(edge);
+                            if (!edge.Begin.AreaName.Equals(_myAreaName))
+                            {
+                                if (edge.Begin.AreaName.Equals(edge.End.AreaName))
+                                {
+                                    edge.SubDomain = true;
+                                }
+                            }
+                            currentVertex.addEdgeOut(edge);
                             graph.Edges.Add(edge);
                         }
 
@@ -251,8 +267,14 @@ namespace ControlPlane
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
             List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
-
             List<string> areaNames = new List<string>();
+
+            if(snppIdPairs == null)
+            {
+                RouteQueryResponse(connectionID, snppIdPairs, areaNames);
+                return;
+            }
+
 
             foreach (SignalMessage.Pair pair in snppIdPairs)
             {
