@@ -10,9 +10,8 @@ namespace ControlPlane
 {
     class Lrm
     {
-        /*
-        private delegate void MyDelegate(string area);
-        RC rc;
+        
+        CC cc;
         private string areaName;
         private bool isActive;
         public System.Timers.Timer keepAliveTimer;
@@ -26,11 +25,11 @@ namespace ControlPlane
             get { return isActive; }
         }
 
-        public Lrm(string areaName, RC rc)
+        public Lrm(string areaName, CC cc)
         {
             this.areaName = areaName;
             isActive = true;
-            this.rc = rc;
+            this.cc = cc;
             keepAliveTimer = new System.Timers.Timer();
             keepAliveTimer.Elapsed += new System.Timers.ElapsedEventHandler(OnTimedEvent);
             keepAliveTimer.AutoReset = false;
@@ -41,20 +40,11 @@ namespace ControlPlane
 
         private void OnTimedEvent(object source, ElapsedEventArgs e)
         {
-
-            MyDelegate del = new MyDelegate(rc.OnNodeFailure);
-
-            IAsyncResult async = del.BeginInvoke(areaName, new AsyncCallback(MyCallBack), null);
             isActive = false;
             keepAliveTimer.Stop();
             keepAliveTimer.Close();
+            cc.OnNodeFailure(areaName);
         }
-        static void MyCallBack(IAsyncResult async)
-        {
-            AsyncResult ar = (AsyncResult)async;
-            MyDelegate del = (MyDelegate)ar.AsyncDelegate;
-            del.EndInvoke(async);
-        }
-        */
+
     }
 }
