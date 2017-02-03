@@ -122,6 +122,13 @@ namespace ControlPlane
                         if (end != null)
                         {
                             Edge edge = new Edge(currentVertex, end, tmpAbstractVertex.Capacity, tmpAbstractVertex.Weight);
+                            if (!edge.Begin.AreaName.Equals(_myAreaName))
+                            {
+                                if (edge.Begin.AreaName.Equals(edge.End.AreaName))
+                                {
+                                    edge.SubDomain = true;
+                                }
+                            }
                             currentVertex.addEdgeOut(edge);
                             graph.Edges.Add(edge);
                         }

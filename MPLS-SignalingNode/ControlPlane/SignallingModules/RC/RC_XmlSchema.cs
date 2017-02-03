@@ -73,6 +73,7 @@ namespace ControlPlane
         [XmlElement("weight")]
         public double weight { get; set; }
 
+
         [XmlArray("reachableID-List")]
         [XmlArrayItem("Record", typeof(int))]
         public List<int> reachableNodes { get; set; }
