@@ -95,7 +95,7 @@ namespace ControlPlane
                     ConnectionResponse_Analyse(message.ConnnectionID, message.IsAccepted);
                     break;
                 case SignalMessage.SignalType.ConnectionFailure:
-
+                    CConnectionFailure(message.ConnnectionID);
                     break;
                 case SignalMessage.SignalType.IsUp:
 
@@ -235,6 +235,18 @@ namespace ControlPlane
             //odczytuje przepustoowość z tablicy
             int callingCapacity = record.AllocatedCapacity;
 
+            #region NoPathFound
+            if(includedSnppIdPairs == null)
+            {
+                if(_higherAreaName != null)
+                    ConnectionFailure(connectionID, _higherAreaName);
+                else
+                {
+                    ConnectionFailure(connectionID);
+                }
+            }
+            #endregion
+
             #region Empty_AreaName
             //jeżeli includedAreaName jest pusta to znaczy, że jest to pierwsza wiadomość i dostaliśmy ogólne SNPP in i out
             if (includedAreaNames.Count == 0)
@@ -310,51 +322,6 @@ namespace ControlPlane
             #endregion
         }
 
-        private void RouteQueryFailureResponse(int connectionID, List<SignalMessage.Pair> includedSnppIdPairs, List<string> includedAreaNames)
-        {
-            //wyszukujemy wskaźnik na odpowiednią tablicę
-            ConnectionTableRecord record = _connectionsList[_indexInListOfConnection[connectionID]];
-
-            //odczytuje przepustoowość z tablicy
-            int callingCapacity = record.AllocatedCapacity;
-            if (includedSnppIdPairs.Count == 0)
-            {
-                if (_higherAreaName != null)
-                {
-                    string destinationIpAddress = _connectedCcDestinationAddrress[_higherAreaName];
-                    ConnectionFailure(connectionID, includedAreaNames[0], destinationIpAddress);
-                }
-                else
-                {
-
-                }
-            }
-            else
-            {
-
-                //uzupełniam tabele o podsieć do której należe
-                record.AllocatedSnpAreaName.Add(_areaName);
-                record.AllocatedSnps.Add(new List<SNP>());
-
-                //uzupełniam tabele o nazwy uwikłanych podsieci oraz alokuje listy na SNP związane z nimi
-                for (int i = 1; i < includedAreaNames.Count; i++)
-                {
-                    record.AllocatedSnpAreaName.Add(includedAreaNames[i]);
-                    record.AllocatedSnps.Add(new List<SNP>());
-                }
-
-                //ustawiamy zmienną, mówiącą o ilości wysyłanych wiaodmości LinkConnectionRequest
-                int numberOfPairs = includedSnppIdPairs.Count;
-                record.NumberOfRequest = numberOfPairs;
-
-                //wyzeruj liczbę otrzymanych wiadomości zwrotnych
-                record.NumberOfResponse = 0;
-
-                //wysyłamy wszystkie requesty na raz
-                for (int i = 0; i < numberOfPairs; i++)
-                    LinkConnectionRequest(connectionID, includedSnppIdPairs[i], callingCapacity);
-            }
-        }
 
         private void LinkConnectionResponse(int connectionID, bool isAccepted, List<SNP> receivedSnps, List<string> receivedSnpsAreaNames)
         {
@@ -571,7 +538,7 @@ namespace ControlPlane
             //wysyłamy żądanie do RC
             _pc.SendSignallingMessage(message);
         }
-        private void ConnectionFailure(int connectionID, string unreachableAreaName, string destinationIpAddress)
+        private void ConnectionFailure(int connectionID, string destinationIpAddress)
         {
             SignalMessage message = new SignalMessage()
             {
@@ -582,7 +549,6 @@ namespace ControlPlane
                 General_DestinationModule = "CC",
 
                 ConnnectionID = connectionID,
-                AreaName = unreachableAreaName,
             };
             _pc.SendSignallingMessage(message);
         }
@@ -640,22 +606,6 @@ namespace ControlPlane
             //wysyłamy żądanie do RC
             _pc.SendSignallingMessage(message);
         }
-        private void RemoteTopologyStatus(string areaName)
-        {
-            SignalMessage message = new SignalMessage()
-            {
-                General_SignalMessageType = SignalMessage.SignalType.ConnectionResponse,
-                General_SourceIpAddress = _localPcIpAddress,
-                General_DestinationIpAddress = _localPcIpAddress,
-                General_SourceModule = "CC",
-                General_DestinationModule = "RC",
-
-                AreaName = areaName,
-            };
-
-            //wysyłamy żądanie do RC
-            _pc.SendSignallingMessage(message);
-        }
         #endregion
 
         #region Other_Methodes
@@ -685,7 +635,6 @@ namespace ControlPlane
                 LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
                 LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
             }
-
         }
 
         public void OnNodeFailure(string areaName)
@@ -700,8 +649,33 @@ namespace ControlPlane
                     RouteQuery(record.ConnectionID, pair, record.AllocatedCapacity);
                 }
             }
-
-            #endregion
         }
+
+        private void CConnectionFailure(int connectionId)
+        {
+            var res = _connectionsList.Find(x => x.ConnectionID == connectionId);
+            if(res != null)
+            {
+                SignalMessage.Pair pair = new SignalMessage.Pair() { first = res.LocalBoundaryFirstSnppID, second = res.LocalBoundarySecondSnppID };
+                RouteQuery(connectionId, pair, res.AllocatedCapacity);
+            }
+        }
+        private void RemoteTopologyStatus(string areaName)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.ConnectionResponse,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "CC",
+                General_DestinationModule = "RC",
+
+                AreaName = areaName,
+            };
+
+            //wysyłamy żądanie do RC
+            _pc.SendSignallingMessage(message);
+        }
+            #endregion
     }
 }

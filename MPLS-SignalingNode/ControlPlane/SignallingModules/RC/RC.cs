@@ -129,7 +129,7 @@ namespace ControlPlane
                                     edge.SubDomain = true;
                                 }
                             }
-                            currentVertex.addEdgeOut(edge);
+                            currentVertex.EdgesOut.Add(edge);
                             graph.Edges.Add(edge);
                         }
 
@@ -299,6 +299,18 @@ namespace ControlPlane
             graph.Vertices.RemoveAll(x => x.AreaName.Equals(areaName));
             graph.Edges.RemoveAll(x => x.Begin.AreaName.Equals(areaName));
             graph.Edges.RemoveAll(x => x.End.AreaName.Equals(areaName));
+            Dijkstra dijkstra = new Dijkstra(_myAreaName);
+            List<PathInfo> pathsInfo = new List<PathInfo>();
+
+            if (!_myAreaName.Contains("Dom"))
+            {
+                pathsInfo = dijkstra.runAlgorithmForAll(graph);
+                foreach (PathInfo pathInfo in pathsInfo)
+                {
+                    Thread.Sleep(20);
+                    LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                }
+            }
         }
         private void LocalTopology(SignalMessage.Pair snppIdPair, double weight, int avaibleCapacity, string areaName)
         {
