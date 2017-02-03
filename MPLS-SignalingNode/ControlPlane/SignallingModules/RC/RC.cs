@@ -14,6 +14,7 @@ namespace ControlPlane
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Graph graph = new Graph();
+        public List<AbstractVertex> abstractVertices = new List<AbstractVertex>();
         private List<Lrm> LRMs = new List<Lrm>();
         private PC _pc;
         #endregion
@@ -30,6 +31,7 @@ namespace ControlPlane
         public RC(string configurationFilePath)
         {
             InitialiseVariables(configurationFilePath);
+            graph = createGraph(abstractVertices);
         }
         private void InitialiseVariables(string configurationFilePath)
         {
@@ -49,9 +51,53 @@ namespace ControlPlane
             }
             foreach (var v in tmp.LocalTopology)
             {
-                LocalTopology(v.ID, v.capacity, v.reachableID, v.areaName);
+                AbstractVertex tmpAbstractVertex = new AbstractVertex(v.ID, v.capacity, v.weight, v.areaName, v.reachableNodes);
+                Console.WriteLine("id: " + v.ID);
+                foreach (int id in v.reachableNodes)
+                {
+                    Console.WriteLine(id);
+                }
+                abstractVertices.Add(tmpAbstractVertex);
             }
         }
+
+        public Graph createGraph(List<AbstractVertex> abstractVertices)
+        {
+
+            Graph graph = new Graph();
+
+            List<Vertex> vertices = new List<Vertex>();
+            foreach (AbstractVertex v in abstractVertices)
+            {
+
+                Vertex tmpVertex = new Vertex(v.ID, v.Capacity, v.Weight, v.AreaName);
+                vertices.Add(tmpVertex);
+
+            }
+            foreach (Vertex currentVertex in vertices)
+            {
+                AbstractVertex tmpAbstractVertex = abstractVertices.Find(x => x.ID == currentVertex.Id);
+                if (tmpAbstractVertex != null)
+                {
+                    foreach (int id in tmpAbstractVertex.ReachableNodes)
+                    {
+                        Vertex end = vertices.Find(x => x.Id == id);
+                        if (end != null)
+                        {
+                            Edge edge = new Edge(currentVertex, end, tmpAbstractVertex.Capacity, tmpAbstractVertex.Weight);
+                            currentVertex.addEdgeOut(edge);
+                            graph.Edges.Add(edge);
+                        }
+
+                    }
+                }
+                graph.Vertices.Add(currentVertex);
+            }
+
+            return graph;
+        }
+
+
         #endregion
 
 
@@ -89,8 +135,7 @@ namespace ControlPlane
                     break;
 
 
-
-
+                /*
                 case SignalMessage.SignalType.LocalTopology:
                     
                     if (_myAreaName.Equals("Domena_1"))
@@ -113,6 +158,7 @@ namespace ControlPlane
                                         
                         LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     break;
+                    */
             }
         }
 
@@ -243,177 +289,7 @@ namespace ControlPlane
             }
 
         }
-        public void LocalTopology(int snppId, int availibleCapacity, List<int> reachableSnppIdList, string areaName)
-        {
-            Console.WriteLine(availibleCapacity);
-            var item = graph.Vertices.Find(x => x.Id == snppId);
-            //przypadek kiedy wierzcholek jeszcze nie istnieje
-            if (item == null)
-            {
-                Vertex v = new Vertex(snppId, availibleCapacity, areaName);
-                foreach (var point in reachableSnppIdList)
-                {
-                    var res = graph.Vertices.Find(x => x.Id == point);
-                    if(res == null)
-                    {
-                        Vertex uncompleteVertex = new Vertex(point, 0, "unreachable");
-                        graph.Vertices.Add(uncompleteVertex);
-                        double weight = double.MaxValue;
-                        Edge uncompleteEdge = new Edge(v, uncompleteVertex, 0,  weight);
-                        v.addEdgeOut(uncompleteEdge);
-                        graph.Edges.Add(uncompleteEdge);
-                    }
-                    else
-                    {
-                        double weight;
-                        int capacity;
-                        if (res.AreaName.Equals(areaName))
-                        {
-                            weight = 0;
-                            capacity = int.MaxValue;
-                        }
-                        else
-                        {
-                            weight = 1;
-                            capacity = Math.Min(v.Capacity, res.Capacity);
-                        }
-                        Edge edge = new Edge(v, res, capacity, weight);
-                        graph.Vertices.Find(x => x.Id == point).addEdgeOut(edge);
-                    }
-                }
-                graph.Vertices.Add(v);
-            }
-            //wierzcholek juz istnieje
-            else
-            {
-                graph.Vertices.Find(x => x.Id == snppId).Capacity = availibleCapacity;
-                graph.Vertices.Find(x => x.Id == snppId).AreaName = areaName;
-                foreach (var point in reachableSnppIdList)
-                {
-                    var res = graph.Vertices.Find(x => x.Id == point);
-                    if (res == null)
-                    {
-                        Vertex uncompleteVertex = new Vertex(point, 0, "unreachable");
-                        graph.Vertices.Add(uncompleteVertex);
-                        double weight = double.MaxValue;
-                        Edge uncompleteEdge = new Edge(graph.Vertices.Find(x => x.Id == snppId), uncompleteVertex, 0, weight);
-                        graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(uncompleteEdge);
-                        graph.Edges.Add(uncompleteEdge);
-                    }
-                    else
-                    {
-                        Edge existingEdge = graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id)));
-                        if ((existingEdge != null) && !(res.AreaName.Equals("unreachable")))
-                        {
-                            if (existingEdge.Weight == double.MaxValue)
-                            {
-                            }
-                            else
-                            {
-                            }
-                        }
-                        else if (existingEdge == null)
-                        {
-
-                            double weight;
-                            int capacity;
-                            if (res.AreaName.Equals(areaName))
-                            {
-                                weight = 0;
-                                capacity = int.MaxValue;
-                            }
-                            else
-                            {
-                                weight = 1;
-                                capacity = Math.Min(item.Capacity, res.Capacity);
-                            }
-                            Edge edge = new Edge(graph.Vertices.Find(x=> x.Id == snppId), graph.Vertices.Find(x=> x.Id == res.Id), capacity, weight);
-                            graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
-                            graph.Edges.Add(edge);
-                        }
-                        else
-                        {
-                            double weight;
-                            int capacity;
-                            if (res.AreaName.Equals(areaName))
-                            {
-                                weight = 0;
-                                capacity = int.MaxValue;
-                            }
-                            else
-                            {
-                                weight = 1;
-                                capacity = Math.Min(item.Capacity, res.Capacity);
-                            }
-                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Capacity = capacity;
-                            graph.Edges.Find(x => x.Id.Equals(Edge.CreateName(snppId, res.Id))).Weight = weight;
-
-                        }
-                    }
-                }
-            }
-            //tworzenie krawedzi pomiedzy wierzcholkami z tego samego SN
-            if (!areaName.Equals(_myAreaName))
-            {
-                List<Vertex> area = new List<Vertex>();
-                area = graph.Vertices.FindAll(x => x.AreaName.Equals(areaName));
-                if (area != null)
-                {
-                    foreach (var v in area)
-                    {
-                        string edgeID = Edge.CreateName(graph.Vertices.Find(x => x.Id == snppId), v);
-                        var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                        if ((res == null) && (v.Id != snppId))
-                        {
-                            int capacity = int.MaxValue;
-                            double weight = 0;
-                            Edge edge = new Edge(graph.Vertices.Find(x => x.Id == snppId), graph.Vertices.Find(x => x.Id == v.Id), capacity, weight);
-                            graph.Vertices.Find(x => x.Id == snppId).addEdgeOut(edge);
-                            graph.Edges.Add(edge);
-                        }
-                        edgeID = Edge.CreateName(v, graph.Vertices.Find(x => x.Id == snppId));
-                        res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                        if ((res == null) && (v.Id != snppId))
-                        {
-                            int capacity = int.MaxValue;
-                            double weight = 0;
-                            Edge edge = new Edge(graph.Vertices.Find(x => x.Id == v.Id), graph.Vertices.Find(x => x.Id == snppId), capacity, weight);
-                            graph.Vertices.Find(x => x.Id == v.Id).addEdgeOut(edge);
-                            graph.Edges.Add(edge);
-                        }
-                    }
-                }
-            }
-            //sprawdzam czy w kierunku SNPP, ktorego rozgloszenie wlasnie otrzymalismy, nie sa skierowane jakies sciezki widma
-            if (item != null)
-            {
-                foreach (var v in graph.Vertices)
-                {
-                    string edgeID = Edge.CreateName(v.Id, snppId);
-                    var res = graph.Edges.Find(x => x.Id.Equals(edgeID));
-                    if (res != null)
-                    {
-                        if (res.Weight == double.MaxValue)
-                        {
-                            double weight;
-                            int capacity;
-                            if (v.AreaName.Equals(areaName))
-                            {
-                                weight = 0;
-                                capacity = int.MaxValue;
-                            }
-                            else
-                            {
-                                weight = 1;
-                                capacity = Math.Min(graph.Vertices.Find(x => x.Id == snppId).Capacity, res.Capacity);
-                            }
-                            graph.Edges.Find(x => x.Id.Equals(edgeID)).Capacity = capacity;
-                            graph.Edges.Find(x => x.Id.Equals(edgeID)).Weight = weight;
-                        }
-                    }
-                }
-            }
-        }
+        
 
 
         public void NetworkTopology (int snppId, List<int> reachableSnppIdList)

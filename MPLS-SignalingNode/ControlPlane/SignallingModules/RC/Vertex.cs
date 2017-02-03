@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 
 namespace ControlPlane
 {
-    [Serializable]
     class Vertex
     {
         private int id;
@@ -40,6 +39,19 @@ namespace ControlPlane
             set { cumulatedWeight = value; }
         }
 
+        private double weight;
+        public double Weight
+        {
+            get
+            {
+                return weight;
+            }
+            set
+            {
+                weight = value;
+            }
+        }
+
         private Edge[] edgesOut;
         public Edge[] EdgesOut
         {
@@ -61,13 +73,14 @@ namespace ControlPlane
             this.edgesOut = new Edge[0];
         }
 
-        public Vertex(int id, int capacity, string areaName)
+        public Vertex(int id, int capacity, double weight, string areaName)
         {
             this.id = id;
             this.edgesOut = new Edge[0];
             this.capacity = capacity;
+            this.weight = weight;
             this.areaName = areaName;
         }
-    
+
     }
 }

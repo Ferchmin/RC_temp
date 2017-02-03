@@ -47,17 +47,19 @@ namespace ControlPlane
         public int ID { get; set; }
         [XmlElement("capacity")]
         public int capacity { get; set; }
+        [XmlElement("weight")]
+        public double weight { get; set; }
 
         [XmlArray("reachableID-List")]
         [XmlArrayItem("Record", typeof(int))]
-        public List<int> reachableID { get; set; }
+        public List<int> reachableNodes { get; set; }
 
         [XmlElement("areaName")]
         public string areaName { get; set; }
 
         public Topology()
         {
-            reachableID = new List<int>();
+            reachableNodes = new List<int>();
         }
     }
 }
