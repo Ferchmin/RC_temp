@@ -61,9 +61,8 @@ namespace DTO.ControlPlane
         #endregion
 
         #region LocalTopology
-        public int LocalTopology_SnppID { get; set; }
+        public double LocalTopology_weight { get; set; }
         public int LocalTopology_availibleCapacity { get; set; }
-        public List<int> LocalTopology_reachableSnppIdList { get; set; }
         public string LocalTopology_areaName { get; set; }
 
         #endregion

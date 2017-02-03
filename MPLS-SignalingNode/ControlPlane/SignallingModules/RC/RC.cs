@@ -13,6 +13,8 @@ namespace ControlPlane
         private string _myAreaName;
         private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
+        private Dictionary<int, int> SN_1ToDomain = new Dictionary<int, int>();
+        private Dictionary<int, int> SN_2ToDomain = new Dictionary<int, int>();
         private Graph graph = new Graph();
         public List<AbstractVertex> abstractVertices = new List<AbstractVertex>();
         private List<Lrm> LRMs = new List<Lrm>();
@@ -42,6 +44,23 @@ namespace ControlPlane
             tmp = RC_LoadingXmlFile.Deserialization(_configurationFilePath);
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
+            if(_myAreaName.Equals("Dom1"))
+            {
+                if (tmp.Translate1 != null)
+                {
+                    foreach (var v in tmp.Translate1)
+                    {
+                        SN_1ToDomain.Add(v.ID_SN_1, v.ID_Domain);
+                    }
+                }
+                if (tmp.Translate2 != null)
+                {
+                    foreach (var v in tmp.Translate2)
+                    {
+                        SN_1ToDomain.Add(v.ID_SN_2, v.ID_Domain);
+                    }
+                }
+            }
             if (tmp.Dictionary != null)
             {
                 foreach (var v in tmp.Dictionary)
@@ -126,7 +145,7 @@ namespace ControlPlane
                     }
 
                     break;
-
+/*
                 case SignalMessage.SignalType.IsUp:
                     IsUp(message.IsUpKeepAlive_areaName);
 
@@ -135,32 +154,13 @@ namespace ControlPlane
                 case SignalMessage.SignalType.KeepAlive:
                     KeepAlive(message.IsUpKeepAlive_areaName);
                     break;
+*/
 
-
-                /*
+                
                 case SignalMessage.SignalType.LocalTopology:
-
-                    if (_myAreaName.Equals("Domena_1"))
-                    {
-                        List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x > 199);
-                        message.LocalTopology_reachableSnppIdList.RemoveAll(x => x > 199);
-                        if (otherDomain != null)
-                            NetworkTopology(message.LocalTopology_SnppID, otherDomain);
-                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
-                    }
-                    else if (_myAreaName.Equals("Domena_2"))
-                    {
-                        List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x < 100);
-                        message.LocalTopology_reachableSnppIdList.RemoveAll(x => x < 100);
-                        if (otherDomain != null)
-                            NetworkTopology(message.LocalTopology_SnppID, otherDomain);
-                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
-                    }
-                    else
-
-                        LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
+                    LocalTopology(message.SnppIdPair, message.LocalTopology_weight, message.LocalTopology_availibleCapacity, message.AreaName);
                     break;
-                    */
+                    
             }
         }
 
@@ -176,9 +176,6 @@ namespace ControlPlane
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = IPTOIDDictionary[callingIpAddress];
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
-
-
-            //SignalMessage signalMessage = new SignalMessage();
 
             Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
@@ -208,9 +205,6 @@ namespace ControlPlane
 
         public void RouteQuery(int connectionID, int snppInId, string calledIpAddress, int callingCapacity)
         {
-
-            //SignalMessage signalMessage = new SignalMessage();
-
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = snppInId;
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
@@ -260,10 +254,18 @@ namespace ControlPlane
             RouteQueryResponse(connectionID, snppIdPairs, areaNames);
 
         }
-        //klasa, ktora tworzy graf sieci
-        //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
-        //graf jest aktualizowany z kazda informacja od LRM
-        
+
+        private void LocalTopology(SignalMessage.Pair snppIdPair, double weight, int avaibleCapacity, string areaName)
+        {
+            int first = SN_1ToDomain[snppIdPair.first];
+            int second = SN_1ToDomain[snppIdPair.second];
+            if (((graph.Vertices.Find(x => x.Id == first)) != null) && ((graph.Vertices.Find(x => x.Id == second)) != null))
+            {
+                Edge edge = new Edge(graph.Vertices.Find(x => x.Id == first), graph.Vertices.Find(x => x.Id == second), avaibleCapacity, weight);
+                graph.Vertices.Find(x => x.Id == first).addEdgeOut(edge);
+                graph.Edges.Add(edge);
+            }
+        }
         public void IsUp(string areaName)
         {
             var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
@@ -318,7 +320,24 @@ namespace ControlPlane
 
             _pc.SendSignallingMessage(message);
         }
+        private void LocalTopology(SignalMessage.Pair snppIdPair, double weight, int avaibleCapacity, string areaName, string domainIpAddress)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.LocalTopology,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = domainIpAddress,
+                General_SourceModule = "RC",
+                General_DestinationModule = "RC",
 
+                SnppIdPair = snppIdPair,
+                LocalTopology_weight = weight,
+                LocalTopology_availibleCapacity = avaibleCapacity,
+                LocalTopology_areaName = areaName
+            };
+
+            _pc.SendSignallingMessage(message);
+        }
         private void RouteQueryResponse(int connectionID, List<SignalMessage.Pair> snppPair, List<string> areaName)
         {
             SignalMessage message = new SignalMessage()
