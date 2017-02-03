@@ -51,6 +51,7 @@
     <Compile Include="ControlPlane\SignallingModules\CC\CC_LoadingXmlFile.cs" />
     <Compile Include="ControlPlane\SignallingModules\CC\CC_XmlSchema.cs" />
     <Compile Include="ControlPlane\SignallingModules\CC\ConnectionTableRecord.cs" />
+    <Compile Include="ControlPlane\SignallingModules\CC\Lrm.cs" />
     <Compile Include="ControlPlane\SignallingModules\LRM\LRM_LoadingXmlFile.cs" />
     <Compile Include="ControlPlane\SignallingModules\LRM\LRM_XmlSchema.cs" />
     <Compile Include="ControlPlane\SignallingModules\PC\PC_LoadingXmlFile.cs" />
@@ -59,7 +60,6 @@
     <Compile Include="ControlPlane\SignallingModules\RC\Dijkstra.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Edge.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Graph.cs" />
-    <Compile Include="ControlPlane\SignallingModules\RC\Lrm.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\Path.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\RC_LoadingXmlFile.cs" />
     <Compile Include="ControlPlane\SignallingModules\RC\RC_XmlSchema.cs" />

@@ -20,6 +20,9 @@ namespace ControlPlane
         private Dictionary<int, int> _indexInListOfConnection;
 
         private Dictionary<string, string> _connectedCcDestinationAddrress;
+
+        private List<Lrm> LRMs = new List<Lrm>();
+
         #endregion
 
         #region Properties
@@ -86,10 +89,24 @@ namespace ControlPlane
                     RouteQueryResponse(message.ConnnectionID, message.IncludedSnppIdPairs, message.IncludedAreaNames);
                     break;
                 case SignalMessage.SignalType.LinkConnectionResponse:
-                    LinkConnectionResponse(message.ConnnectionID,message.IsAccepted, message.LinkConnection_AllocatedSnpList, message.LinkConnection_AllocatedSnpAreaNameList);
+                    LinkConnectionResponse(message.ConnnectionID, message.IsAccepted, message.LinkConnection_AllocatedSnpList, message.LinkConnection_AllocatedSnpAreaNameList);
                     break;
                 case SignalMessage.SignalType.ConnectionResponse:
                     ConnectionResponse_Analyse(message.ConnnectionID, message.IsAccepted);
+                    break;
+
+                case SignalMessage.SignalType.RouteQoueryFailureResponse:
+                    RouteQueryFailureResponse(message.ConnnectionID, message.IncludedSnppIdPairs, message.IncludedAreaNames);
+                    break;
+                case SignalMessage.SignalType.ConnectionFailure:
+
+                    break;
+                case SignalMessage.SignalType.IsUp:
+
+                    break;
+
+                case SignalMessage.SignalType.KeepAlive:
+
                     break;
             }
         }
@@ -109,7 +126,7 @@ namespace ControlPlane
                     AllocatedSnpAreaName = new List<string>(),
                     Status = "inProgress"
                 });
-            
+
             //dodajemy wpis w słowniku dzięki czemu będziemy wiedzieć, że to connection ID odpowieada temu indexowi w liście
             _indexInListOfConnection.Add(connectionID, _connectionsList.Count - 1);
 
@@ -198,7 +215,7 @@ namespace ControlPlane
                     int labelOut = 0;
 
                     //przeszukaj liste AllocatedSNP związaną z lokal areaName i znajdz SNP skojarzony z localBoundaryFirstSnppID
-                    foreach(SNP element in record.AllocatedSnps[0])
+                    foreach (SNP element in record.AllocatedSnps[0])
                     {
                         if (element._snppID == record.LocalBoundaryFirstSnppID)
                             labelIn = element._allocatedLabel;
@@ -218,7 +235,7 @@ namespace ControlPlane
         {
             //wyszukujemy wskaźnik na odpowiednią tablicę
             ConnectionTableRecord record = _connectionsList[_indexInListOfConnection[connectionID]];
-  
+
             //odczytuje przepustoowość z tablicy
             int callingCapacity = record.AllocatedCapacity;
 
@@ -268,6 +285,10 @@ namespace ControlPlane
             #region Full_AreaName
             else
             {
+                //dodac locka
+
+
+
                 //uzupełniam tabele o podsieć do której należe
                 record.AllocatedSnpAreaName.Add(_areaName);
                 record.AllocatedSnps.Add(new List<SNP>());
@@ -292,6 +313,53 @@ namespace ControlPlane
             }
             #endregion
         }
+
+        private void RouteQueryFailureResponse(int connectionID, List<SignalMessage.Pair> includedSnppIdPairs, List<string> includedAreaNames)
+        {
+            //wyszukujemy wskaźnik na odpowiednią tablicę
+            ConnectionTableRecord record = _connectionsList[_indexInListOfConnection[connectionID]];
+
+            //odczytuje przepustoowość z tablicy
+            int callingCapacity = record.AllocatedCapacity;
+            if (includedSnppIdPairs.Count == 0)
+            {
+                if (_higherAreaName != null)
+                {
+                    string destinationIpAddress = _connectedCcDestinationAddrress[_higherAreaName];
+                    ConnectionFailure(connectionID, includedAreaNames[0], destinationIpAddress);
+                }
+                else
+                {
+
+                }
+            }
+            else
+            {
+
+                //uzupełniam tabele o podsieć do której należe
+                record.AllocatedSnpAreaName.Add(_areaName);
+                record.AllocatedSnps.Add(new List<SNP>());
+
+                //uzupełniam tabele o nazwy uwikłanych podsieci oraz alokuje listy na SNP związane z nimi
+                for (int i = 1; i < includedAreaNames.Count; i++)
+                {
+                    record.AllocatedSnpAreaName.Add(includedAreaNames[i]);
+                    record.AllocatedSnps.Add(new List<SNP>());
+                }
+
+                //ustawiamy zmienną, mówiącą o ilości wysyłanych wiaodmości LinkConnectionRequest
+                int numberOfPairs = includedSnppIdPairs.Count;
+                record.NumberOfRequest = numberOfPairs;
+
+                //wyzeruj liczbę otrzymanych wiadomości zwrotnych
+                record.NumberOfResponse = 0;
+
+                //wysyłamy wszystkie requesty na raz
+                for (int i = 0; i < numberOfPairs; i++)
+                    LinkConnectionRequest(connectionID, includedSnppIdPairs[i], callingCapacity);
+            }
+        }
+
         private void LinkConnectionResponse(int connectionID, bool isAccepted, List<SNP> receivedSnps, List<string> receivedSnpsAreaNames)
         {
             //wyszukujemy wskaźnik na odpowiednią tablicę
@@ -305,7 +373,7 @@ namespace ControlPlane
             {
                 //odpowiedź jest pozytywna - udało się zaalokować łącze
                 //uzupełniam odpowiednie listy danymi zawartymi w odpowiedzi
-                for(int i=0; i< receivedSnpsAreaNames.Count; i++)
+                for (int i = 0; i < receivedSnpsAreaNames.Count; i++)
                 {
                     int index = record.AllocatedSnpAreaName.IndexOf(receivedSnpsAreaNames[i]);
                     record.AllocatedSnps[index].Add(receivedSnps[i]);
@@ -323,11 +391,11 @@ namespace ControlPlane
             #endregion
 
             #region Step_2-Sprawdź_czy_odebrałem_wszystkie_odpowiedzi_czy_mam_czekac_dalej
-            if(record.NumberOfResponse == record.NumberOfRequest)
+            if (record.NumberOfResponse == record.NumberOfRequest)
             {
                 //otrzymałem wszystkie odpowiedzi
                 //ustaw nowy status rekordu oznaczający, że wszystkie lokalne linki zostały ustawione
-                    record.Status = "localLinksAllocated";
+                record.Status = "localLinksAllocated";
 
                 //sprawdź, czy nasze połaczenie przechodzi przez jakieś podsieci
                 if (record.AllocatedSnpAreaName.Count > 1)   //zawsze będzie nasza podsieć
@@ -370,7 +438,7 @@ namespace ControlPlane
             }
 
             #endregion
-            
+
             //if (record.IsInterdomain && record.Status == "establishingInterdomainLink")
             //{
 
@@ -471,6 +539,24 @@ namespace ControlPlane
             //wysyłam wiadomość
             _pc.SendSignallingMessage(message);
         }
+        private void RouteQueryFailure(int connectionID, SignalMessage.Pair snppIdPair, int callingCapacity, string areaName)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.RouteQueryFailure,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "CC",
+                General_DestinationModule = "RC",
+
+                ConnnectionID = connectionID,
+                SnppIdPair = snppIdPair,
+                CallingCapacity = callingCapacity
+            };
+
+            //wysyłam wiadomość
+            _pc.SendSignallingMessage(message);
+        }
         private void LinkConnectionRequest(int connectionID, SignalMessage.Pair connectionSnppIdPair, int callingCapacity)
         {
             SignalMessage message = new SignalMessage()
@@ -507,7 +593,38 @@ namespace ControlPlane
             //wysyłamy żądanie do RC
             _pc.SendSignallingMessage(message);
         }
-        private void ConnectionResponse(int connectionID, bool isAccepted,int labelIn,int labelOut)
+        private void ConnectionFailure(int connectionID, string unreachableAreaName, string destinationIpAddress)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.ConnectionFailure,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = destinationIpAddress,
+                General_SourceModule = "CC",
+                General_DestinationModule = "CC",
+
+                ConnnectionID = connectionID,
+                AreaName = unreachableAreaName,
+            };
+            _pc.SendSignallingMessage(message);
+        }
+        private void ConnectionFailure(int connectionID)
+        {
+            SignalMessage message = new SignalMessage()
+            {
+                General_SignalMessageType = SignalMessage.SignalType.ConnectionResponse,
+                General_SourceIpAddress = _localPcIpAddress,
+                General_DestinationIpAddress = _localPcIpAddress,
+                General_SourceModule = "CC",
+                General_DestinationModule = "NCC",
+
+                ConnnectionID = connectionID,
+            };
+
+            //wysyłamy żądanie do RC
+            _pc.SendSignallingMessage(message);
+        }
+        private void ConnectionResponse(int connectionID, bool isAccepted, int labelIn, int labelOut)
         {
             SignalMessage message = new SignalMessage()
             {
@@ -554,6 +671,42 @@ namespace ControlPlane
             //gdzies to przekaż albo coś UZUPEŁNIć !!
             return 1;
         }
-        #endregion
+
+        public void IsUp(string areaName)
+        {
+            var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if (lrm == null)
+            {
+                Lrm l = new Lrm(areaName, this);
+                LRMs.Add(l);
+            }
+            else
+                KeepAlive(areaName);
+        }
+        public void KeepAlive(string areaName)
+        {
+            var item = LRMs.Find(x => x.AreaName.Equals(areaName));
+            if (item != null)
+            {
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
+                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
+            }
+
+        }
+
+        public void OnNodeFailure(string areaName)
+        {
+            foreach (var record in _connectionsList)
+            {
+                var res = record.AllocatedSnpAreaName.Find(x => x.Equals(areaName));
+                if (res != null)
+                {
+                    SignalMessage.Pair pair = new SignalMessage.Pair() { first = record.LocalBoundaryFirstSnppID, second = record.LocalBoundarySecondSnppID };
+                    RouteQueryFailure(record.ConnectionID, pair, record.AllocatedCapacity, areaName);
+                }
+            }
+
+            #endregion
+        }
     }
 }

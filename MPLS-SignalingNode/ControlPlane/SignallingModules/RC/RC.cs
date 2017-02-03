@@ -115,14 +115,16 @@ namespace ControlPlane
                     if (message.CallingIpAddress != null)
                     {
                         RouteQuery(message.ConnnectionID, message.CallingIpAddress, message.CalledIpAddress, message.CallingCapacity); // Wewnatrzdomenowa wiad nr 1 i miedzydomenowa nr 1
-                    }else if(message.CalledIpAddress != null)
+                    }
+                    else if (message.CalledIpAddress != null)
                     {
                         RouteQuery(message.ConnnectionID, message.SnppInId, message.CalledIpAddress, message.CallingCapacity); // Miedzydomenowa wiad nr 3
-                    }else
+                    }
+                    else
                     {
                         RouteQuery(message.ConnnectionID, message.SnppIdPair, message.CallingCapacity); // wewnatrzdomenowa wiad nr 2 i miedzydomenowa nr 2
                     }
-                       
+
                     break;
 
                 case SignalMessage.SignalType.IsUp:
@@ -137,7 +139,7 @@ namespace ControlPlane
 
                 /*
                 case SignalMessage.SignalType.LocalTopology:
-                    
+
                     if (_myAreaName.Equals("Domena_1"))
                     {
                         List<int> otherDomain = message.LocalTopology_reachableSnppIdList.FindAll(x => x > 199);
@@ -155,7 +157,7 @@ namespace ControlPlane
                         LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     }
                     else
-                                        
+
                         LocalTopology(message.LocalTopology_SnppID, message.LocalTopology_availibleCapacity, message.LocalTopology_reachableSnppIdList, message.LocalTopology_areaName);
                     break;
                     */
@@ -174,7 +176,7 @@ namespace ControlPlane
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = IPTOIDDictionary[callingIpAddress];
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
-            
+
 
             //SignalMessage signalMessage = new SignalMessage();
 
@@ -184,20 +186,21 @@ namespace ControlPlane
             List<string> areaNames = new List<string>();
             List<SignalMessage.Pair> snppPairs = new List<SignalMessage.Pair>();
 
-            
+            SNPPPair.second = interdomainLinks[end.Id];
 
             if (begin.AreaName.Equals(end.AreaName))
             {
                 areaNames = null;
                 snppPairs.Add(SNPPPair);
                 RouteQueryResponse(connectionID, snppPairs, areaNames);
-            }else
+            }
+            else
             {
                 areaNames.Add(end.AreaName);
                 snppPairs.Add(SNPPPair);
                 SignalMessage.Pair interdomainPair = new SignalMessage.Pair();
-                interdomainPair.first = end.Id;
-                interdomainPair.second = interdomainLinks[end.Id];
+                interdomainPair.first = interdomainLinks[end.Id];
+                interdomainPair.second = end.Id;
                 snppPairs.Add(interdomainPair);
                 RouteQueryResponse(connectionID, snppPairs, areaNames);
             }
@@ -224,7 +227,8 @@ namespace ControlPlane
             if (begin.AreaName.Equals(end.AreaName))
             {
                 RouteQueryResponse(connectionID, localSnppPairs, null);
-            }else
+            }
+            else
             {
                 RouteQueryResponse(connectionID, localSnppPairs, areaNames);
             }
@@ -240,23 +244,14 @@ namespace ControlPlane
 
             List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
 
-            if (snppIdPairs == null)
-            {
-                snppIdPairs = new List<SignalMessage.Pair>();
-                List<String> emptyAreaNames = new List<string>();
-
-                RouteQueryResponse(connectionID, snppIdPairs, emptyAreaNames);
-                return;
-            }
-   
             List<string> areaNames = new List<string>();
 
-            foreach(SignalMessage.Pair pair in snppIdPairs)
+            foreach (SignalMessage.Pair pair in snppIdPairs)
             {
                 //Vertex firstVertex = graph.Vertices.Find(x => x.Id == pair.first);
                 Vertex secondVertex = graph.Vertices.Find(x => x.Id == pair.second);
 
-                if(!secondVertex.AreaName.Equals(_myAreaName))
+                if (!secondVertex.AreaName.Equals(_myAreaName))
                 {
                     areaNames.Add(secondVertex.AreaName);
                 }
@@ -268,13 +263,14 @@ namespace ControlPlane
         //klasa, ktora tworzy graf sieci
         //RC wykorzystuje graf do wyznaczania sciezek dla polaczen
         //graf jest aktualizowany z kazda informacja od LRM
+        
         public void IsUp(string areaName)
         {
             var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
             if (lrm == null)
             {
-                Lrm l = new Lrm(areaName, this);
-                LRMs.Add(l);
+               // Lrm l = new Lrm(areaName, this);
+              //  LRMs.Add(l);
             }
             else
                 KeepAlive(areaName);
@@ -282,7 +278,7 @@ namespace ControlPlane
         public void KeepAlive(string areaName)
         {
             var item = LRMs.Find(x => x.AreaName.Equals(areaName));
-            if(item != null)
+            if (item != null)
             {
                 LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
                 LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
@@ -292,10 +288,10 @@ namespace ControlPlane
         
 
 
-        public void NetworkTopology (int snppId, List<int> reachableSnppIdList)
+        public void NetworkTopology(int snppId, List<int> reachableSnppIdList)
         {
             foreach (var id in reachableSnppIdList)
-                interdomainLinks.Add(snppId, id);
+                interdomainLinks.Add(id, snppId);
         }
         #endregion
 
@@ -303,7 +299,7 @@ namespace ControlPlane
 
         #region Outcomming_Methodes_From_Standardization
 
-        
+
 
         private void RouteQueryResponse(int connectionID, SignalMessage.Pair snppPair, int callingCapacity)
         {
@@ -323,7 +319,7 @@ namespace ControlPlane
             _pc.SendSignallingMessage(message);
         }
 
-        private void RouteQueryResponse(int connectionID,List<SignalMessage.Pair> snppPair,List<string> areaName)
+        private void RouteQueryResponse(int connectionID, List<SignalMessage.Pair> snppPair, List<string> areaName)
         {
             SignalMessage message = new SignalMessage()
             {

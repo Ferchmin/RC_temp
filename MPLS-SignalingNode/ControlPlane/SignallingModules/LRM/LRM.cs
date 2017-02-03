@@ -12,7 +12,7 @@ namespace ControlPlane
 
         #region Variables
         private string _configurationFilePath;
-        private string _myRcIpAddress;
+        private string _myCCIpAddress;
         private string _localPcIpAddress;
         private string _areaName;
         private Dictionary<string, string> _lrmToSubnetworksDictionary;    //słownik zawierający nazwę podsieci wraz z przypisanej do niej adresem agenta LRM
@@ -762,9 +762,9 @@ namespace ControlPlane
             {
                 General_SignalMessageType = SignalMessage.SignalType.IsUp,
                 General_DestinationIpAddress = _localPcIpAddress,
-                General_SourceIpAddress = _myRcIpAddress,
+                General_SourceIpAddress = _myCCIpAddress,
                 General_SourceModule = "LRM",
-                General_DestinationModule = "RC",
+                General_DestinationModule = "CC",
 
                 IsUpKeepAlive_areaName = _areaName,
             };
@@ -776,9 +776,9 @@ namespace ControlPlane
             {
                 General_SignalMessageType = SignalMessage.SignalType.KeepAlive,
                 General_DestinationIpAddress = _localPcIpAddress,
-                General_SourceIpAddress = _myRcIpAddress,
+                General_SourceIpAddress = _myCCIpAddress,
                 General_SourceModule = "LRM",
-                General_DestinationModule = "RC",
+                General_DestinationModule = "CC",
 
                 IsUpKeepAlive_areaName = _areaName,
             };

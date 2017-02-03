@@ -32,6 +32,7 @@ namespace DTO.ControlPlane
         public string CalledIpAddress { get; set; }
         public int LabelIN { get; set; }
         public int LabelOUT { get; set; }
+        public string AreaName { get; set; }
         public int ModificationID { get; set; }
         public int SnppInId { get; set; }
         public Pair SnppIdPair { get; set; }
@@ -88,8 +89,10 @@ namespace DTO.ControlPlane
             IsUp, KeepAlive,
 
             //CC
-            ConnectionRequest, RouteQueryResponse, PeerCoordination,
-            ConnectionResponse, RouteQuery, PeerCoordinationOut
+            ConnectionRequest, RouteQueryResponse, PeerCoordination, RouteQueryFailure,
+            ConnectionResponse, RouteQuery, RouteQoueryFailureResponse, PeerCoordinationOut,
+            ConnectionFailure,
+
         };
 
         [Serializable]
