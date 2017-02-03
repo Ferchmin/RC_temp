@@ -19,12 +19,8 @@ namespace ControlPlane
         private Dictionary<int, int> SN_2ToDomain = new Dictionary<int, int>();
         private Graph graph = new Graph();
         public List<AbstractVertex> abstractVertices = new List<AbstractVertex>();
-        private List<Lrm> LRMs = new List<Lrm>();
+        
         private PC _pc;
-        #endregion
-
-        #region Properties
-        public PC LocalPC { set { _pc = value; } }
         #endregion
 
         public RC()
@@ -33,8 +29,11 @@ namespace ControlPlane
         }
         #region Main_Methodes
 
-        public RC(string configurationFilePath)
+        public RC(string configurationFilePath, PC modulePC)
         {
+            _pc = modulePC;
+            
+
             InitialiseVariables(configurationFilePath);
             graph = createGraph(abstractVertices);
             Dijkstra dijkstra = new Dijkstra(_myAreaName);
@@ -45,7 +44,7 @@ namespace ControlPlane
                 pathsInfo = dijkstra.runAlgorithmForAll(graph);
                 foreach (PathInfo pathInfo in pathsInfo)
                 {
-                    Thread.Sleep(20);
+                    Thread.Sleep(100);
                     LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
                 }
             }
@@ -62,7 +61,7 @@ namespace ControlPlane
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
             _domainIpAddress = tmp.XMP_DomainIpAddress;
-            if(_myAreaName.Equals("Dom1"))
+            if(_myAreaName.Equals("Dom_1"))
             {
                 if (tmp.Translate1 != null)
                 {
@@ -75,7 +74,7 @@ namespace ControlPlane
                 {
                     foreach (var v in tmp.Translate2)
                     {
-                        SN_1ToDomain.Add(v.ID_SN_2, v.ID_Domain);
+                        SN_2ToDomain.Add(v.ID_SN_2, v.ID_Domain);
                     }
                 }
             }
@@ -208,7 +207,6 @@ namespace ControlPlane
             List<string> areaNames = new List<string>();
             List<SignalMessage.Pair> snppPairs = new List<SignalMessage.Pair>();
 
-            SNPPPair.second = interdomainLinks[end.Id];
 
             if (begin.AreaName.Equals(end.AreaName))
             {
@@ -262,14 +260,8 @@ namespace ControlPlane
             Vertex end = graph.Vertices.Find(x => x.Id == snppIdPair.second);
 
             List<SignalMessage.Pair> snppIdPairs = dijkstra.runAlgorithm(graph, begin, end, callingCapacity);
+
             List<string> areaNames = new List<string>();
-
-            if(snppIdPairs == null)
-            {
-                RouteQueryResponse(connectionID, snppIdPairs, areaNames);
-                return;
-            }
-
 
             foreach (SignalMessage.Pair pair in snppIdPairs)
             {
@@ -278,7 +270,11 @@ namespace ControlPlane
 
                 if (!secondVertex.AreaName.Equals(_myAreaName))
                 {
-                    areaNames.Add(secondVertex.AreaName);
+                    String tmp = areaNames.Find(x => x == secondVertex.AreaName);
+                    if (tmp == null)
+                    {
+                        areaNames.Add(secondVertex.AreaName);
+                    }
                 }
             }
 
@@ -299,24 +295,7 @@ namespace ControlPlane
         }
         public void IsUp(string areaName)
         {
-            var lrm = LRMs.Find(x => x.AreaName.Equals(areaName));
-            if (lrm == null)
-            {
-               // Lrm l = new Lrm(areaName, this);
-              //  LRMs.Add(l);
-            }
-            else
-                KeepAlive(areaName);
-        }
-        public void KeepAlive(string areaName)
-        {
-            var item = LRMs.Find(x => x.AreaName.Equals(areaName));
-            if (item != null)
-            {
-                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Stop();
-                LRMs.Find(x => x.AreaName.Equals(areaName)).keepAliveTimer.Start();
-            }
-
+            
         }
         
 
