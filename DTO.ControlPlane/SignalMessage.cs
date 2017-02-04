@@ -64,7 +64,10 @@ namespace DTO.ControlPlane
         public double LocalTopology_weight { get; set; }
         public int LocalTopology_availibleCapacity { get; set; }
         public string LocalTopology_areaName { get; set; }
-
+        public List<int> snppids { get; set; }
+        public List<int> capacities { get; set; }
+        public List<string> areaNames { get; set; }
+        public List<List<int>> reachableSNPPs { get; set; }
         #endregion
 
         #region IsUp/KeepAlive
@@ -83,15 +86,18 @@ namespace DTO.ControlPlane
             CallRequest, CallAccept,
             
             //LRM
-            LinkConnectionRequest, SNPNegotiation, LinkConnectionDealocation, SNPRealise, LocalTopology,
+            LinkConnectionRequest, SNPNegotiation, LinkConnectionDealocation, SNPRealise,
             LinkConnectionResponse, SNPNegotiationResponse, LinkConnectionDealocationResponse, SNPRealiseResponse, 
-            IsUp, KeepAlive,
+            IsUp, KeepAlive, Topology,
 
             //CC
             ConnectionRequest, RouteQueryResponse, PeerCoordination,
             ConnectionResponse, RouteQuery, PeerCoordinationOut,
             ConnectionFailure,
             RemoteTopologyStatus,
+
+            //RC
+            LocalTopology, 
 
         };
 
