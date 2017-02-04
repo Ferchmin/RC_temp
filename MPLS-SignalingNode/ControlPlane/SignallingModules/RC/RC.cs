@@ -255,10 +255,13 @@ namespace ControlPlane
             }
             else
             {
+                //czy kris chce areaNames.Add(begin.AreaName); ? Wtedy areaNames to bedzie {Dom_1,Dom_2}
                 areaNames.Add(end.AreaName);
+
+                //Z ta linijka jest pairs = ({1,3},{3,201})
+                SNPPPair.second = interdomainLinksDictionary[end.Id]; //Kris czy ma byc pairs = ({1,3},{3,201}) CZY pairs = ({1,201},{3,201})
                 snppPairs.Add(SNPPPair);
 
-                //TUTAJ ogarnij miedzydomenowy
                 SignalMessage.Pair interdomainPair = new SignalMessage.Pair();
                 interdomainPair.first = interdomainLinksDictionary[end.Id];
                 interdomainPair.second = end.Id;
@@ -269,26 +272,39 @@ namespace ControlPlane
 
         public void RouteQuery(int connectionID, int snppInId, string calledIpAddress, int callingCapacity)
         {
+
+            //tak samo jak dwa ip
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
             SNPPPair.first = snppInId;
             SNPPPair.second = IPTOIDDictionary[calledIpAddress];
 
-            List<SignalMessage.Pair> localSnppPairs = new List<SignalMessage.Pair>();
-            localSnppPairs.Add(SNPPPair);
-
             Vertex begin = graph.Vertices.Find(x => x.Id == SNPPPair.first);
             Vertex end = graph.Vertices.Find(x => x.Id == SNPPPair.second);
 
-            List<String> areaNames = new List<String>();
-            areaNames.Add(end.AreaName);
+            List<string> areaNames = new List<string>();
+            List<SignalMessage.Pair> snppPairs = new List<SignalMessage.Pair>();
+
 
             if (begin.AreaName.Equals(end.AreaName))
             {
-                RouteQueryResponse(connectionID, localSnppPairs, null);
+                areaNames = null;
+                snppPairs.Add(SNPPPair);
+                RouteQueryResponse(connectionID, snppPairs, areaNames);
             }
             else
             {
-                RouteQueryResponse(connectionID, localSnppPairs, areaNames);
+                //czy kris chce areaNames.Add(begin.AreaName); ? Wtedy areaNames to bedzie {Dom_1,Dom_2}
+                areaNames.Add(end.AreaName);
+
+                //Z ta linijka jest pairs = ({1,3},{3,201})
+                SNPPPair.second = interdomainLinksDictionary[end.Id]; //Kris czy ma byc pairs = ({1,3},{3,201}) CZY pairs = ({1,201},{3,201})
+                snppPairs.Add(SNPPPair);
+
+                SignalMessage.Pair interdomainPair = new SignalMessage.Pair();
+                interdomainPair.first = interdomainLinksDictionary[end.Id];
+                interdomainPair.second = end.Id;
+                snppPairs.Add(interdomainPair);
+                RouteQueryResponse(connectionID, snppPairs, areaNames);
             }
         }
 
