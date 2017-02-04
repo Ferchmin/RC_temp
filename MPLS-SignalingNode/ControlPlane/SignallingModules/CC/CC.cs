@@ -95,7 +95,7 @@ namespace ControlPlane
                     ConnectionResponse_Analyse(message.ConnnectionID, message.IsAccepted);
                     break;
                 case SignalMessage.SignalType.ConnectionFailure:
-                    CConnectionFailure(message.ConnnectionID);
+                    ConnectionFailureAnalyse(message.ConnnectionID);
                     break;
                 case SignalMessage.SignalType.IsUp:
 
@@ -651,7 +651,7 @@ namespace ControlPlane
             }
         }
 
-        private void CConnectionFailure(int connectionId)
+        private void ConnectionFailureAnalyse(int connectionId)
         {
             var res = _connectionsList.Find(x => x.ConnectionID == connectionId);
             if(res != null)
