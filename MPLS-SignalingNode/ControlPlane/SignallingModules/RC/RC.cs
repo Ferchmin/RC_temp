@@ -19,7 +19,7 @@ namespace ControlPlane
         private Dictionary<int, int> SN_2ToDomain = new Dictionary<int, int>();
         private Graph graph = new Graph();
         public List<AbstractVertex> abstractVertices = new List<AbstractVertex>();
-        
+
         private PC _pc;
         public PC LocalPC
         {
@@ -43,7 +43,7 @@ namespace ControlPlane
         public RC(string configurationFilePath, PC modulePC)
         {
             _pc = modulePC;
-            
+
 
             InitialiseVariables(configurationFilePath);
             graph = createGraph(abstractVertices);
@@ -59,7 +59,7 @@ namespace ControlPlane
                     LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
                 }
             }
-            
+
         }
 
         public RC(string configurationFilePath)
@@ -90,7 +90,7 @@ namespace ControlPlane
             _localPcIpAddress = tmp.XML_myIPAddress;
             _myAreaName = tmp.XMP_myAreaName;
             _domainIpAddress = tmp.XMP_DomainIpAddress;
-            if(_myAreaName.Equals("Dom_1"))
+            if (_myAreaName.Equals("Dom_1"))
             {
                 if (tmp.Translate1 != null)
                 {
@@ -114,9 +114,9 @@ namespace ControlPlane
                     IPTOIDDictionary.Add(v.IP, v.ID);
                 }
             }
-            if(tmp.interdomainDictionary != null)
+            if (tmp.interdomainDictionary != null)
             {
-                foreach(var v in tmp.interdomainDictionary)
+                foreach (var v in tmp.interdomainDictionary)
                 {
                     interdomainLinksDictionary.Add(v.id1, v.id2);
                 }
@@ -124,11 +124,6 @@ namespace ControlPlane
             foreach (var v in tmp.LocalTopology)
             {
                 AbstractVertex tmpAbstractVertex = new AbstractVertex(v.ID, v.capacity, v.weight, v.areaName, v.reachableNodes);
-                Console.WriteLine("id: " + v.ID);
-                foreach (int id in v.reachableNodes)
-                {
-                    Console.WriteLine(id);
-                }
                 abstractVertices.Add(tmpAbstractVertex);
             }
         }
@@ -175,8 +170,6 @@ namespace ControlPlane
 
             return graph;
         }
-
-
         #endregion
 
 
@@ -208,18 +201,9 @@ namespace ControlPlane
                 case SignalMessage.SignalType.RemoteTopologyStatus:
                     RemoteTopologyStatus(message.AreaName);
                     break;
-                /*
-                                case SignalMessage.SignalType.IsUp:
-                                    IsUp(message.IsUpKeepAlive_areaName);
-
-                                    break;
-
-                                case SignalMessage.SignalType.KeepAlive:
-                                    KeepAlive(message.IsUpKeepAlive_areaName);
-                                    break;
-                */
-
-
+                case SignalMessage.SignalType.Topology:
+                    Topology(message.snppids, message.capacities, message.areaNames, message.reachableSNPPs);
+                    break;
                 case SignalMessage.SignalType.LocalTopology:
                     LocalTopology(message.SnppIdPair, message.LocalTopology_weight, message.LocalTopology_availibleCapacity, message.AreaName);
                     break;
@@ -231,9 +215,41 @@ namespace ControlPlane
         #endregion
 
 
-
         #region Incomming_Methodes_From_Standardization
-
+        private void Topology(List<int> snppids, List<int> capacities, List<string> areaNames, List<List<int>> reachableSNPPs)
+        {
+            for(int i = 0; i<snppids.Count; i++)
+            {
+                var res = abstractVertices.Find(x => x.ID == snppids[i]);
+                if(res != null)
+                {
+                    abstractVertices.Find(x => x.ID == snppids[i]).Capacity = capacities[i];
+                    abstractVertices.Find(x => x.ID == snppids[i]).AreaName = areaNames[i];
+                    abstractVertices.Find(x => x.ID == snppids[i]).ReachableNodes = reachableSNPPs[i];
+                }
+                else
+                {
+                    AbstractVertex tmpAbstractVertex = new AbstractVertex(snppids[i], capacities[i], 5, areaNames[i], reachableSNPPs[i]);
+                    Console.WriteLine("id: " + snppids[i]);
+                    foreach (int id in reachableSNPPs[i])
+                    {
+                        Console.WriteLine(id);
+                    }
+                    abstractVertices.Add(tmpAbstractVertex);
+                }
+            }
+            graph = createGraph(abstractVertices);
+            if (!_myAreaName.Contains("Dom"))
+            {
+                Dijkstra dijkstra = new Dijkstra(_myAreaName);
+                var pathsInfo = dijkstra.runAlgorithmForAll(graph);
+                foreach (PathInfo pathInfo in pathsInfo)
+                {
+                    Thread.Sleep(100);
+                    LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                }
+            }
+        }
         private void RouteQuery(int connectionID, string callingIpAddress, string calledIpAddress, int callingCapacity)
         {
             SignalMessage.Pair SNPPPair = new SignalMessage.Pair();
@@ -359,7 +375,7 @@ namespace ControlPlane
         }
         public void IsUp(string areaName)
         {
-            
+
         }
         public void NetworkTopology(int snppId, List<int> reachableSnppIdList)
         {
