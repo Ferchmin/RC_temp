@@ -12,7 +12,7 @@ namespace MPLS_SignalingNode
         static void Main(string[] args)
         {
             string end = null;
-            RC rc = new RC("rc_config.xml");
+            RC rc = new RC("rc_config.xml", null);
             PC pc = new PC("pc_config.xml", rc);
 
             rc.LocalPC = pc;

@@ -13,7 +13,7 @@ namespace ControlPlane
         private string _localPcIpAddress;
         private string _myAreaName;
         private string _domainIpAddress;
-        private Dictionary<int, int> interdomainLinks = new Dictionary<int, int>();
+        private Dictionary<int, int> interdomainLinksDictionary = new Dictionary<int, int>();
         private Dictionary<string, int> IPTOIDDictionary = new Dictionary<string, int>();
         private Dictionary<int, int> SN_1ToDomain = new Dictionary<int, int>();
         private Dictionary<int, int> SN_2ToDomain = new Dictionary<int, int>();
@@ -21,6 +21,17 @@ namespace ControlPlane
         public List<AbstractVertex> abstractVertices = new List<AbstractVertex>();
         
         private PC _pc;
+        public PC LocalPC
+        {
+            get
+            {
+                return _pc;
+            }
+            set
+            {
+                _pc = value;
+            }
+        }
         #endregion
 
         public RC()
@@ -51,6 +62,24 @@ namespace ControlPlane
             
         }
 
+        public RC(string configurationFilePath)
+        {
+            InitialiseVariables(configurationFilePath);
+            graph = createGraph(abstractVertices);
+            Dijkstra dijkstra = new Dijkstra(_myAreaName);
+            List<PathInfo> pathsInfo = new List<PathInfo>();
+
+            if (!_myAreaName.Contains("Dom"))
+            {
+                pathsInfo = dijkstra.runAlgorithmForAll(graph);
+                foreach (PathInfo pathInfo in pathsInfo)
+                {
+                    Thread.Sleep(100);
+                    LocalTopology(pathInfo.beginEnd, pathInfo.Weight, pathInfo.Capacity, pathInfo.AreaName, _domainIpAddress);
+                }
+            }
+        }
+
         private void InitialiseVariables(string configurationFilePath)
         {
             _configurationFilePath = configurationFilePath;
@@ -78,11 +107,18 @@ namespace ControlPlane
                     }
                 }
             }
-            if (tmp.Dictionary != null)
+            if (tmp.iptoidDictionary != null)
             {
-                foreach (var v in tmp.Dictionary)
+                foreach (var v in tmp.iptoidDictionary)
                 {
                     IPTOIDDictionary.Add(v.IP, v.ID);
+                }
+            }
+            if(tmp.interdomainDictionary != null)
+            {
+                foreach(var v in tmp.interdomainDictionary)
+                {
+                    interdomainLinksDictionary.Add(v.id1, v.id2);
                 }
             }
             foreach (var v in tmp.LocalTopology)
@@ -221,8 +257,10 @@ namespace ControlPlane
             {
                 areaNames.Add(end.AreaName);
                 snppPairs.Add(SNPPPair);
+
+                //TUTAJ ogarnij miedzydomenowy
                 SignalMessage.Pair interdomainPair = new SignalMessage.Pair();
-                interdomainPair.first = interdomainLinks[end.Id];
+                interdomainPair.first = interdomainLinksDictionary[end.Id];
                 interdomainPair.second = end.Id;
                 snppPairs.Add(interdomainPair);
                 RouteQueryResponse(connectionID, snppPairs, areaNames);
@@ -326,7 +364,7 @@ namespace ControlPlane
         public void NetworkTopology(int snppId, List<int> reachableSnppIdList)
         {
             foreach (var id in reachableSnppIdList)
-                interdomainLinks.Add(id, snppId);
+                interdomainLinksDictionary.Add(id, snppId);
         }
         #endregion
 

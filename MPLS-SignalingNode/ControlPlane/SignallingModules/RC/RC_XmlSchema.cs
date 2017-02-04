@@ -48,13 +48,22 @@ namespace ControlPlane
         }
 
         [XmlElement("IPTOID")]
-        public IPTOID[] Dictionary { get; set; }
+        public IPTOID[] iptoidDictionary { get; set; }
 
 
         [XmlArray("LocalTopology")]
         [XmlArrayItem("Record", typeof(Topology))]
         public List<Topology> LocalTopology { get; set; }
 
+        public struct interdomainLinks
+        {
+            [XmlElement("id1")]
+            public int id1 { get; set; }
+            [XmlElement("id2")]
+            public int id2 { get; set; }
+        }
+        [XmlElement("interdomainLinks")]
+        public interdomainLinks[] interdomainDictionary { get; set; }
 
         public RC_XmlSchame()
         {
